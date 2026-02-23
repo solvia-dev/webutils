@@ -1,0 +1,16 @@
+# Jekyll 編譯產出的最終結果資料夾，不需要進入版本控制
+_site/
+
+# Jekyll 快取資料夾
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+
+# 如果有使用 Bundler 安裝套件（可選，但標準 Ruby 專案建議加入）
+.bundle/
+vendor/
+*.gem
+
+# 系統產生的隱藏檔案
+.DS_Store
+Thumbs.db

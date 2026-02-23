@@ -1,0 +1,145 @@
+---
+layout: default
+title: 編解碼工具
+---
+
+<ul class="nav nav-tabs mb-4" id="toolTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="base64-tab" type="button" role="tab"
+            onclick="changeMode('base64', this)">Base64</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="html-tab" type="button" role="tab" onclick="changeMode('html', this)">Html</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="url-tab" type="button" role="tab" onclick="changeMode('url', this)">Url</button>
+    </li>
+</ul>
+
+<div class="row align-items-center mb-5">
+    <!-- 左側：原始文字 -->
+    <div class="col-md-5">
+        <label class="form-label fw-bold">原始文字</label>
+        <textarea id="inputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
+        <div class="text-end mt-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'inputText')" title="複製">
+                <i class="bi bi-copy"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 中間：功能按鈕 -->
+    <div class="col-md-2 text-center d-flex flex-column justify-content-center align-items-center gap-3">
+        <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
+            style="width: 44px; height: 36px;" onclick="processText('encode')" title="編碼 (Encode)">
+            <i class="bi bi-arrow-right"></i>
+        </button>
+        <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
+            style="width: 44px; height: 36px;" onclick="processText('decode')" title="解碼 (Decode)">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+    </div>
+
+    <!-- 右側：結果文字 -->
+    <div class="col-md-5">
+        <label class="form-label fw-bold" id="resultLabel">結果文字 (base64)</label>
+        <textarea id="outputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
+        <div class="text-end mt-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'outputText')" title="複製">
+                <i class="bi bi-copy"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'base64';
+
+    function changeMode(mode, btnElement) {
+        currentMode = mode.toLowerCase();
+        document.getElementById('resultLabel').innerText = `結果文字 (${mode})`;
+
+        // 更新 Tab 的 Highlight (active) 樣式
+        document.querySelectorAll('#toolTabs .nav-link').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
+    }
+
+    function processText(action) {
+        // 依據行為決定輸入輸出的框
+        const inputId = action === 'encode' ? 'inputText' : 'outputText';
+        const outputId = action === 'encode' ? 'outputText' : 'inputText';
+
+        const input = document.getElementById(inputId).value;
+        const outputEl = document.getElementById(outputId);
+
+        if (!input) {
+            return; // 空值不處理也不跳錯，比較符合流暢體驗
+        }
+
+        try {
+            let result = '';
+            switch (currentMode) {
+                case 'url':
+                    result = action === 'encode' ? encodeURIComponent(input) : decodeURIComponent(input);
+                    break;
+                case 'html':
+                    result = action === 'encode' ? encodeHTML(input) : decodeHTML(input);
+                    break;
+                case 'base64':
+                    if (action === 'encode') {
+                        // 支援中文的 Base64 編碼
+                        result = btoa(encodeURIComponent(input).replace(/%([0-9A-F]{2})/g,
+                            function toSolidBytes(match, p1) {
+                                return String.fromCharCode('0x' + p1);
+                            }));
+                    } else {
+                        // 支援中文的 Base64 解碼
+                        result = decodeURIComponent(atob(input).split('').map(function (c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                    }
+                    break;
+            }
+
+            outputEl.value = result;
+
+        } catch (e) {
+            alert(`轉換時發生錯誤！\n請確認您的輸入內容是否符合該格式之解碼規則。`);
+        }
+    }
+
+    function encodeHTML(str) {
+        return str.replace(/[\u00A0-\u9999<>\&]/g, function (i) {
+            return '&#' + i.charCodeAt(0) + ';';
+        });
+    }
+
+    function decodeHTML(str) {
+        var txt = document.createElement("textarea");
+        txt.innerHTML = str;
+        return txt.value;
+    }
+
+    function copyText(btnElement, elementId) {
+        const el = document.getElementById(elementId);
+        if (!el.value) return;
+
+        el.select();
+        el.setSelectionRange(0, 99999);
+
+        navigator.clipboard.writeText(el.value).then(() => {
+            // 給予簡單的視覺回饋（將複製圖示改為打勾圖示，過一陣子改回來）
+            const icon = btnElement.querySelector('i');
+            if (icon) {
+                icon.className = 'bi bi-check2 text-success';
+                setTimeout(() => { icon.className = 'bi bi-copy text-body'; }, 1500);
+            }
+        }).catch(() => {
+            alert("複製失敗，請手動複製");
+        });
+    }
+</script>
