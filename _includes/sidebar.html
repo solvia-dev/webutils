@@ -1,0 +1,44 @@
+<nav id="sidebar" class="bg-dark text-white">
+    <div class="d-flex flex-column h-100">
+        <!-- Logo area -->
+        <div class="p-3 border-bottom border-secondary">
+            <a class="text-decoration-none text-white d-flex align-items-center" href="{{ '/' | relative_url }}">
+                <i class="bi bi-bootstrap-fill text-primary fs-4 me-2"></i>
+                <span class="fs-5 fw-semibold">{{ site.title }}</span>
+            </a>
+        </div>
+
+        <!-- Navigation menu -->
+        <div class="flex-grow-1 p-2">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if page.url == '/' %}active{% endif %}" href="{{ '/' | relative_url }}">
+                        <i class="bi bi-house-door"></i> 首頁
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if page.url contains '/decode/' %}active{% endif %}" href="{{ '/decode/' | relative_url }}">
+                        <i class="bi bi-braces"></i> 編解碼工具
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if page.url contains 'imgtobase64' %}active{% endif %}" href="{{ '/images/imgtobase64.html' | relative_url }}">
+                        <i class="bi bi-file-image"></i> ImgToBase64
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if page.url == '/about.html' %}active{% endif %}" href="{{ '/about.html' | relative_url }}">
+                        <i class="bi bi-info-circle"></i> 關於我們
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Footer info -->
+        <div class="p-3 border-top border-secondary">
+            <small class="text-muted">
+                {{ site.time | date: '%Y' }} {{ site.title }}
+            </small>
+        </div>
+    </div>
+</nav>

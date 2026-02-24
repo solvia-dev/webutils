@@ -8,20 +8,24 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link {% if page.url == '/' %}active{% endif %}" aria-current="page"
-            href="{{ '/' | relative_url }}">首頁</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if page.url contains '/decode/' %}active{% endif %}"
-            href="{{ '/decode/' | relative_url }}">編解碼工具</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if page.url == '/about.html' %}active{% endif %}"
-            href="{{ '/about.html' | relative_url }}">關於我們</a>
-        </li>
-      </ul>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link {% if page.url == '/' %}active{% endif %}" aria-current="page"
+                   href="{{ '/' | relative_url }}">首頁</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if page.url contains '/decode/' %}active{% endif %}"
+                   href="{{ '/decode/' | relative_url }}">編解碼工具</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if page.url contains 'imgtobase64.html' %}active{% endif %}"
+                   href="{{ '/images/imgtobase64.html' | relative_url }}">ImgToBase64</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if page.url == '/about.html' %}active{% endif %}"
+                   href="{{ '/about.html' | relative_url }}">關於我們</a>
+            </li>
+        </ul>
     </div>
   </div>
 </nav>
