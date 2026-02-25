@@ -23,7 +23,7 @@
     --gh-btn-bg: #f6f8fa;
     --gh-btn-border: #d0d7de;
     --gh-btn-hover-bg: #f3f4f6;
-  --gh-btn-hover-border: #1b1f2426;
+    --gh-btn-hover-border: #1b1f2426;
     --gh-radius-sm: 6px;
     --gh-radius-md: 8px;
     --gh-radius-lg: 12px;
@@ -44,13 +44,13 @@ body {
 #sidebar {
     width: 260px;
     min-height: 100vh;
-  background-color: var(--gh-sidebar-bg);
+    background-color: var(--gh-sidebar-bg);
     border-right: 1px solid var(--gh-border-color);
     transition: margin-left 0.2s ease-in-out;
 }
 
 #sidebar.collapsed {
- margin-left: -260px;
+    margin-left: -260px;
 }
 
 #sidebar .nav-link {
@@ -116,7 +116,7 @@ body {
 }
 
 #sidebar .nav-submenu .nav-link.active {
- color: var(--gh-accent-emphasis);
+    color: var(--gh-accent-emphasis);
     background-color: var(--gh-sidebar-active);
 }
 
@@ -140,7 +140,7 @@ body {
 #topbar {
     background-color: var(--gh-bg-primary);
     border-bottom: 1px solid var(--gh-border-color);
- padding: 12px 16px;
+    padding: 12px 16px;
 }
 
 #topbar .navbar-brand {
@@ -258,7 +258,7 @@ textarea.form-control {
 }
 
 .btn-sm {
-padding: 3px 12px;
+    padding: 3px 12px;
     font-size: 12px;
 }
 
@@ -273,7 +273,7 @@ padding: 3px 12px;
     font-weight: 500;
     padding: 8px 16px;
     border: 1px solid transparent;
-  border-radius: var(--gh-radius-sm) var(--gh-radius-sm) 0 0;
+    border-radius: var(--gh-radius-sm) var(--gh-radius-sm) 0 0;
     margin-bottom: -1px;
 }
 
@@ -294,7 +294,7 @@ padding: 3px 12px;
 }
 
 .fw-bold {
-font-weight: 600 !important;
+    font-weight: 600 !important;
 }
 
 /* Page Header */
@@ -328,8 +328,8 @@ h4 i {
 
 /* Sidebar Overlay (Mobile) */
 #sidebar-overlay {
-  display: none;
-  position: fixed;
+    display: none;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -346,7 +346,7 @@ h4 i {
 footer {
     background-color: var(--gh-bg-secondary);
     border-top: 1px solid var(--gh-border-color);
-  color: var(--gh-text-secondary);
+    color: var(--gh-text-secondary);
     font-size: 12px;
 }
 
@@ -367,7 +367,7 @@ footer {
 kbd {
     background-color: var(--gh-bg-tertiary);
     border: 1px solid var(--gh-border-color);
-  border-radius: var(--gh-radius-sm);
+    border-radius: var(--gh-radius-sm);
     box-shadow: inset 0 -1px 0 var(--gh-border-color);
     color: var(--gh-text-primary);
     font-size: 11px;
@@ -384,21 +384,21 @@ kbd {
 @media (max-width: 991.98px) {
     #sidebar {
         position: fixed;
-  z-index: 1050;
+        z-index: 1050;
         margin-left: -260px;
     }
 
     #sidebar.show {
-      margin-left: 0;
-  }
+        margin-left: 0;
+    }
 
     #ad-sidebar {
         display: none;
- }
+    }
 }
 
 @media (min-width: 992px) {
-    #sidebar.collapsed + #content-wrapper {
+    #sidebar.collapsed+#content-wrapper {
         margin-left: 0;
     }
 }
@@ -427,4 +427,65 @@ kbd {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gh-text-muted);
+}
+
+/* ========================================
+   Premium Brand Logo Styles
+   ======================================== */
+.brand-logo-wrapper {
+    transition: transform 0.2s ease, filter 0.2s ease;
+    display: inline-block;
+}
+
+.brand-logo-wrapper:hover {
+    transform: translateY(-1px) scale(1.02);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+}
+
+.logo-glass-icon {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 10px;
+    font-size: 1.15rem;
+    color: #0ea5e9;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), 0 2px 5px rgba(14, 165, 233, 0.1);
+}
+
+.brand-text-wrapper {
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.brand-solvia {
+    font-size: 1.35rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+.brand-dev {
+    font-size: 1.35rem;
+    font-weight: 300;
+    color: #475569;
+    margin-left: 2px;
+    letter-spacing: -0.5px;
+}
+
+.brand-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.3em 0.6em;
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.25);
+    border: none;
 }
