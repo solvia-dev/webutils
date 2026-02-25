@@ -43,14 +43,14 @@ body {
 /* Sidebar Styles */
 #sidebar {
     width: 260px;
-    min-height: 100vh;
+    height: 100%;
     background-color: var(--gh-sidebar-bg);
-    border-right: 1px solid var(--gh-border-color);
-    transition: margin-left 0.2s ease-in-out;
+    transition: width 0.2s ease-in-out, margin-left 0.2s ease-in-out;
+    overflow-x: hidden;
 }
 
 #sidebar.collapsed {
-    margin-left: -260px;
+    width: 64px;
 }
 
 #sidebar .nav-link {
@@ -60,7 +60,10 @@ body {
     margin: 2px 8px;
     font-size: 14px;
     font-weight: 500;
-    transition: background-color 0.1s ease;
+    transition: background-color 0.1s ease, color 0.1s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
 }
 
 #sidebar .nav-link:hover {
@@ -74,9 +77,28 @@ body {
 }
 
 #sidebar .nav-link i {
-    margin-right: 8px;
-    font-size: 16px;
-    opacity: 0.8;
+    font-size: 1.15rem;
+}
+
+/* 展開/收合時的微調整 */
+#sidebar.collapsed .nav-link {
+    justify-content: center !important;
+    padding: 12px 0;
+}
+
+#sidebar.collapsed .nav-text,
+#sidebar.collapsed .nav-arrow {
+    display: none !important;
+}
+
+#sidebar.collapsed .collapse {
+    display: none !important;
+}
+
+/* Sidebar 收合時，展開的目錄也要有 Highlight (Active) 效果 */
+#sidebar.collapsed .nav-category[aria-expanded="true"] {
+    color: var(--gh-accent-emphasis);
+    background-color: var(--gh-sidebar-active);
 }
 
 /* 雙層目錄樣式 */
@@ -124,14 +146,14 @@ body {
 #main-wrapper {
     display: flex;
     width: 100%;
-    min-height: 100vh;
+    overflow: hidden;
 }
 
 #content-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100%;
     background-color: var(--gh-bg-primary);
     transition: margin-left 0.2s ease-in-out;
 }
@@ -384,8 +406,12 @@ kbd {
 @media (max-width: 991.98px) {
     #sidebar {
         position: fixed;
+        top: 61px;
+        /* 避開 Topbar 的高度 */
+        height: calc(100vh - 61px);
         z-index: 1050;
         margin-left: -260px;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     }
 
     #sidebar.show {

@@ -1,0 +1,208 @@
+---
+layout: default
+title: Unix Timestamp 轉換器
+---
+
+<div class="mb-4">
+    <h4><i class="bi bi-clock-history"></i> Unix Timestamp 轉換器</h4>
+    <p class="text-muted">支援 Unix 時間戳記與標準時間格式 (yyyy/MM/dd HH:mm:ss) 之間的雙向轉換。</p>
+</div>
+
+<div class="row">
+    <!-- 左側：Unix Timestamp 轉換至日期時間 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-arrow-right-circle"></i> Timestamp 轉 日期時間
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="inputTimestamp" class="form-label">Unix Timestamp (秒 或 毫秒)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputTimestamp" placeholder="例如: 1708940800">
+                        <button class="btn btn-primary" type="button" onclick="convertFromTimestamp()">轉換 <i
+                                class="bi bi-arrow-down"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="outputDatetime" class="form-label">結果時間 (yyyy/MM/dd HH:mm:ss)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="outputDatetime" readonly>
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="copyText(this, 'outputDatetime')"><i class="bi bi-copy"></i></button>
+                    </div>
+                </div>
+                <div class="text-muted small">
+                    <span id="timestampStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：日期時間轉換至 Unix Timestamp -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-arrow-left-circle"></i> 日期時間 轉 Timestamp
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="inputDatetime" class="form-label">時間 (yyyy/MM/dd HH:mm:ss)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputDatetime"
+                            placeholder="例如: 2024/02/26 18:30:00">
+                        <button class="btn btn-primary" type="button" onclick="convertToTimestamp()">轉換 <i
+                                class="bi bi-arrow-down"></i></button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="outputTimestamp" class="form-label">結果 Timestamp (秒)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="outputTimestamp" readonly>
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="copyText(this, 'outputTimestamp')"><i class="bi bi-copy"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="outputTimestampMs" class="form-label">結果 Timestamp (毫秒)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="outputTimestampMs" readonly>
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="copyText(this, 'outputTimestampMs')"><i class="bi bi-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body bg-light">
+                <h6 class="card-title fw-bold"><i class="bi bi-info-circle"></i> 當前時間狀態</h6>
+                <div class="row mt-3">
+                    <div class="col-md-4 mb-2">
+                        <div class="p-2 border rounded bg-white text-center">
+                            <small class="text-muted d-block mb-1">當前時間</small>
+                            <span class="fw-bold" id="currentTimeStr">--</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="p-2 border rounded bg-white text-center">
+                            <small class="text-muted d-block mb-1">當前 Timestamp (秒)</small>
+                            <span class="fw-bold text-primary" id="currentTimestampSec">--</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="p-2 border rounded bg-white text-center">
+                            <small class="text-muted d-block mb-1">當前 Timestamp (毫秒)</small>
+                            <span class="fw-bold text-primary" id="currentTimestampMs">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 取得當前時間並更新儀表板
+    function updateCurrentTime() {
+        const now = new Date();
+        document.getElementById('currentTimeStr').textContent = formatDatetimeInfo(now);
+        document.getElementById('currentTimestampSec').textContent = Math.floor(now.getTime() / 1000);
+        document.getElementById('currentTimestampMs').textContent = now.getTime();
+    }
+
+    // 初始化及定時更新
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+
+    // 將 Timestamp 轉換為日期字串
+    function convertFromTimestamp() {
+        let tsStr = document.getElementById('inputTimestamp').value.trim();
+        const output = document.getElementById('outputDatetime');
+        const status = document.getElementById('timestampStatus');
+
+        if (!tsStr) {
+            output.value = '';
+            status.textContent = '請輸入 Timestamp';
+            return;
+        }
+
+        let tsMatch = tsStr.match(/(\d+)/);
+        if (!tsMatch) {
+            output.value = '無效的格式';
+            status.textContent = '';
+            return;
+        }
+
+        let ts = parseInt(tsMatch[1], 10);
+
+        // 自動判斷是秒還是毫秒
+        // 通常大於 10000000000 (100億) 就被當作是毫秒 (1970 至今秒數約十幾億)
+        let isMs = tsStr.length > 11;
+
+        if (isMs) {
+            status.innerHTML = '偵測為: <span class="badge bg-secondary">毫秒 (ms)</span>';
+        } else {
+            status.innerHTML = '偵測為: <span class="badge bg-secondary">秒 (sec)</span>';
+            ts = ts * 1000;
+        }
+
+        let date = new Date(ts);
+        if (isNaN(date.getTime())) {
+            output.value = '無效的時間戳記';
+            return;
+        }
+
+        output.value = formatDatetimeInfo(date);
+    }
+
+    // 將日期字串轉換為 Timestamp
+    function convertToTimestamp() {
+        let dtStr = document.getElementById('inputDatetime').value.trim();
+        const outputSec = document.getElementById('outputTimestamp');
+        const outputMs = document.getElementById('outputTimestampMs');
+
+        if (!dtStr) {
+            outputSec.value = '';
+            outputMs.value = '';
+            return;
+        }
+
+        // 把 yyyy/MM/dd 或是 yyyy-MM-dd 更統一處理
+        // 但 JS 原生 Date 解析需要特定格式，通常 "YYYY/MM/DD HH:mm:ss" 或 "YYYY-MM-DDTHH:mm:ss" 都支援
+        let date = new Date(dtStr);
+
+        // 如果無效，試著替換 '-' 為 '/' 或是處理格式
+        if (isNaN(date.getTime())) {
+            let replacedDtStr = dtStr.replace(/-/g, '/');
+            date = new Date(replacedDtStr);
+        }
+
+        if (isNaN(date.getTime())) {
+            outputSec.value = '解析失敗，請確認時間格式';
+            outputMs.value = '解析失敗，請確認時間格式';
+            return;
+        }
+
+        let ms = date.getTime();
+        outputSec.value = Math.floor(ms / 1000);
+        outputMs.value = ms;
+    }
+
+    // 日期時間格式化工具 (輸出：yyyy/MM/dd HH:mm:ss)
+    function formatDatetimeInfo(date) {
+        let yyyy = date.getFullYear();
+        let MM = String(date.getMonth() + 1).padStart(2, '0');
+        let dd = String(date.getDate()).padStart(2, '0');
+        let HH = String(date.getHours()).padStart(2, '0');
+        let mm = String(date.getMinutes()).padStart(2, '0');
+        let ss = String(date.getSeconds()).padStart(2, '0');
+
+        return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
+    }
+</script>
