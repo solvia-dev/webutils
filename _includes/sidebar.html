@@ -1,46 +1,100 @@
-<nav id="sidebar" class="bg-dark text-white">
+<nav id="sidebar">
     <div class="d-flex flex-column h-100">
         <!-- Logo area -->
-        <div class="p-3 border-bottom border-secondary">
-            <a class="text-decoration-none text-white d-flex align-items-center" href="{{ '/' | relative_url }}">
-                <i class="bi bi-bootstrap-fill text-primary fs-4 me-2"></i>
+        <div class="p-3">
+            <!--<a class="text-decoration-none d-flex align-items-center" href="{{ '/' | relative_url }}">
+                <img src="{{ '/img/icon.png' | relative_url }}" alt="Logo" style="width: 28px; height: 28px;" class="me-2">
                 <span class="fs-5 fw-semibold">{{ site.title }}</span>
-            </a>
+            </a>-->
         </div>
 
         <!-- Navigation menu -->
         <div class="flex-grow-1 p-2">
             <ul class="nav flex-column">
+                <!-- 編碼解碼 -->
                 <li class="nav-item">
-                    <a class="nav-link {% if page.url == '/' %}active{% endif %}" href="{{ '/' | relative_url }}">
-                        <i class="bi bi-house-door"></i> 首頁
+                    <a class="nav-link nav-category d-flex justify-content-between align-items-center"
+                        data-bs-toggle="collapse" href="#decodeMenu" role="button"
+                        aria-expanded="{% if page.url contains '/decode/' %}true{% else %}false{% endif %}">
+                        <span><i class="bi bi-braces"></i> 編碼解碼</span>
+                        <i class="bi bi-chevron-down nav-arrow"></i>
                     </a>
+                    <div class="collapse {% if page.url contains '/decode/' %}show{% endif %}" id="decodeMenu">
+                        <ul class="nav flex-column nav-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains '/decode/text' %}active{% endif %}"
+                                    href="{{ '/decode/text.html' | relative_url }}">
+                                    常用編碼
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains '/decode/aes' %}active{% endif %}"
+                                    href="{{ '/decode/aes.html' | relative_url }}">
+                                    AES 加解密
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
+
+                <!-- 圖片處理 -->
                 <li class="nav-item">
-                    <a class="nav-link {% if page.url contains '/decode/' %}active{% endif %}"
-                        href="{{ '/decode/' | relative_url }}">
-                        <i class="bi bi-braces"></i> 編碼解碼
+                    <a class="nav-link nav-category d-flex justify-content-between align-items-center"
+                        data-bs-toggle="collapse" href="#imageMenu" role="button"
+                        aria-expanded="{% if page.url contains '/images/' %}true{% else %}false{% endif %}">
+                        <span><i class="bi bi-file-image"></i> 圖片處理</span>
+                        <i class="bi bi-chevron-down nav-arrow"></i>
                     </a>
+                    <div class="collapse {% if page.url contains '/images/' %}show{% endif %}" id="imageMenu">
+                        <ul class="nav flex-column nav-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains 'imgtobase64' %}active{% endif %}"
+                                    href="{{ '/images/imgtobase64.html' | relative_url }}">
+                                    ImgToBase64
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains 'base64toimg' %}active{% endif %}"
+                                    href="{{ '/images/base64toimg.html' | relative_url }}">
+                                    Base64ToImg
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
+
+                <!-- 格式化 -->
                 <li class="nav-item">
-                    <a class="nav-link {% if page.url contains 'imgtobase64' %}active{% endif %}"
-                        href="{{ '/images/imgtobase64.html' | relative_url }}">
-                        <i class="bi bi-file-image"></i> ImgToBase64
+                    <a class="nav-link nav-category d-flex justify-content-between align-items-center"
+                        data-bs-toggle="collapse" href="#formatMenu" role="button"
+                        aria-expanded="{% if page.url contains '/format/' %}true{% else %}false{% endif %}">
+                        <span><i class="bi bi-code-square"></i> 格式化</span>
+                        <i class="bi bi-chevron-down nav-arrow"></i>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if page.url == '/about.html' %}active{% endif %}"
-                        href="{{ '/about.html' | relative_url }}">
-                        <i class="bi bi-info-circle"></i> 關於
-                    </a>
+                    <div class="collapse {% if page.url contains '/format/' %}show{% endif %}" id="formatMenu">
+                        <ul class="nav flex-column nav-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains '/format/jsonstring' %}active{% endif %}"
+                                    href="{{ '/format/jsonstring.html' | relative_url }}">
+                                    JSON 格式化
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if page.url contains '/format/htmlstring' %}active{% endif %}"
+                                    href="{{ '/format/htmlstring.html' | relative_url }}">
+                                    HTML 格式化
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
             </ul>
         </div>
 
         <!-- Footer info -->
-        <div class="p-3 border-top border-secondary">
+        <div class="p-3">
             <small class="text-muted">
-                {{ site.time | date: '%Y' }} {{ site.title }}
+                <!--{{ site.time | date: '%Y' }} {{ site.title }}-->
             </small>
         </div>
     </div>

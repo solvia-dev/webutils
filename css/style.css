@@ -1,0 +1,430 @@
+/* ========================================
+   GitHub-inspired Minimal Style
+   ======================================== */
+
+/* CSS Variables - GitHub Color Palette */
+:root {
+    --gh-bg-primary: #ffffff;
+    --gh-bg-secondary: #f6f8fa;
+    --gh-bg-tertiary: #f0f0f0;
+    --gh-border-color: #d0d7de;
+    --gh-border-muted: #d8dee4;
+    --gh-text-primary: #1f2328;
+    --gh-text-secondary: #656d76;
+    --gh-text-muted: #8c959f;
+    --gh-link-color: #0969da;
+    --gh-accent-emphasis: #0969da;
+    --gh-success-emphasis: #1a7f37;
+    --gh-danger-emphasis: #cf222e;
+    --gh-sidebar-bg: #f6f8fa;
+    --gh-sidebar-text: #1f2328;
+    --gh-sidebar-hover: rgba(208, 215, 222, 0.4);
+    --gh-sidebar-active: rgba(9, 105, 218, 0.1);
+    --gh-btn-bg: #f6f8fa;
+    --gh-btn-border: #d0d7de;
+    --gh-btn-hover-bg: #f3f4f6;
+  --gh-btn-hover-border: #1b1f2426;
+    --gh-radius-sm: 6px;
+    --gh-radius-md: 8px;
+    --gh-radius-lg: 12px;
+    --gh-shadow-sm: 0 1px 0 rgba(31, 35, 40, 0.04);
+    --gh-shadow-md: 0 3px 6px rgba(140, 149, 159, 0.15);
+}
+
+/* Base Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--gh-text-primary);
+    background-color: var(--gh-bg-secondary);
+}
+
+/* Sidebar Styles */
+#sidebar {
+    width: 260px;
+    min-height: 100vh;
+  background-color: var(--gh-sidebar-bg);
+    border-right: 1px solid var(--gh-border-color);
+    transition: margin-left 0.2s ease-in-out;
+}
+
+#sidebar.collapsed {
+ margin-left: -260px;
+}
+
+#sidebar .nav-link {
+    color: var(--gh-text-secondary);
+    padding: 8px 12px;
+    border-radius: var(--gh-radius-sm);
+    margin: 2px 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.1s ease;
+}
+
+#sidebar .nav-link:hover {
+    color: var(--gh-text-primary);
+    background-color: var(--gh-sidebar-hover);
+}
+
+#sidebar .nav-link.active {
+    color: var(--gh-accent-emphasis);
+    background-color: var(--gh-sidebar-active);
+}
+
+#sidebar .nav-link i {
+    margin-right: 8px;
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* 雙層目錄樣式 */
+#sidebar .nav-category {
+    color: var(--gh-text-primary);
+    font-weight: 500;
+}
+
+#sidebar .nav-category:hover {
+    color: var(--gh-text-primary);
+    background-color: var(--gh-sidebar-hover);
+}
+
+#sidebar .nav-category .nav-arrow {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    margin-right: 0;
+}
+
+#sidebar .nav-category[aria-expanded="true"] .nav-arrow {
+    transform: rotate(180deg);
+}
+
+#sidebar .nav-submenu {
+    padding-left: 20px;
+}
+
+#sidebar .nav-submenu .nav-link {
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--gh-text-secondary);
+}
+
+#sidebar .nav-submenu .nav-link:hover {
+    color: var(--gh-text-primary);
+    background-color: var(--gh-sidebar-hover);
+}
+
+#sidebar .nav-submenu .nav-link.active {
+ color: var(--gh-accent-emphasis);
+    background-color: var(--gh-sidebar-active);
+}
+
+/* Main Wrapper */
+#main-wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+#content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--gh-bg-primary);
+    transition: margin-left 0.2s ease-in-out;
+}
+
+/* Top Navbar - GitHub Style */
+#topbar {
+    background-color: var(--gh-bg-primary);
+    border-bottom: 1px solid var(--gh-border-color);
+ padding: 12px 16px;
+}
+
+#topbar .navbar-brand {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gh-text-primary);
+}
+
+/* Main Content */
+main {
+    background-color: var(--gh-bg-primary);
+}
+
+/* Card Styles - GitHub Style */
+.card {
+    background-color: var(--gh-bg-primary);
+    border: 1px solid var(--gh-border-color);
+    border-radius: var(--gh-radius-md);
+    box-shadow: var(--gh-shadow-sm);
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.card-header {
+    background-color: var(--gh-bg-secondary);
+    border-bottom: 1px solid var(--gh-border-color);
+    padding: 12px 16px;
+    font-weight: 600;
+}
+
+/* Form Controls - GitHub Style */
+.form-control {
+    border: 1px solid var(--gh-border-color);
+    border-radius: var(--gh-radius-sm);
+    padding: 5px 12px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--gh-text-primary);
+    background-color: var(--gh-bg-primary);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: var(--gh-accent-emphasis);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+}
+
+.form-control::placeholder {
+    color: var(--gh-text-muted);
+}
+
+textarea.form-control {
+    padding: 8px 12px;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gh-text-primary);
+    margin-bottom: 6px;
+}
+
+/* Input Group - GitHub Style */
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Buttons - GitHub Style */
+.btn {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    padding: 5px 16px;
+    border-radius: var(--gh-radius-sm);
+    transition: 0.15s ease-in-out;
+}
+
+.btn-outline-secondary {
+    color: var(--gh-text-primary);
+    background-color: var(--gh-btn-bg);
+    border: 1px solid var(--gh-btn-border);
+}
+
+.btn-outline-secondary:hover {
+    color: var(--gh-text-primary);
+    background-color: #e8ebee;
+    border-color: #b5bdc4;
+    box-shadow: 0 1px 3px rgba(31, 35, 40, 0.12);
+}
+
+.btn-outline-secondary:active {
+    background-color: #d8dce0;
+    border-color: #a0a8b0;
+}
+
+.btn-primary {
+    color: #ffffff;
+    background-color: var(--gh-accent-emphasis);
+    border-color: var(--gh-accent-emphasis);
+}
+
+.btn-primary:hover {
+    background-color: #0860ca;
+    border-color: #0860ca;
+    box-shadow: 0 1px 3px rgba(9, 105, 218, 0.3);
+}
+
+.btn-sm {
+padding: 3px 12px;
+    font-size: 12px;
+}
+
+/* Nav Tabs - GitHub Style */
+.nav-tabs {
+    border-bottom: 1px solid var(--gh-border-color);
+}
+
+.nav-tabs .nav-link {
+    color: var(--gh-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+  border-radius: var(--gh-radius-sm) var(--gh-radius-sm) 0 0;
+    margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: var(--gh-border-muted) var(--gh-border-muted) var(--gh-border-color);
+    background-color: var(--gh-bg-secondary);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--gh-text-primary);
+    background-color: var(--gh-bg-primary);
+    border-color: var(--gh-border-color) var(--gh-border-color) var(--gh-bg-primary);
+}
+
+/* Text Utilities */
+.text-muted {
+    color: var(--gh-text-secondary) !important;
+}
+
+.fw-bold {
+font-weight: 600 !important;
+}
+
+/* Page Header */
+h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gh-text-primary);
+}
+
+h4 i {
+    margin-right: 8px;
+}
+
+/* Ad Sidebar */
+#ad-sidebar {
+    width: 280px;
+    min-width: 280px;
+    background-color: var(--gh-bg-secondary);
+    border-left: 1px solid var(--gh-border-color);
+    padding: 16px;
+}
+
+.ad-placeholder {
+    background-color: var(--gh-bg-primary);
+    border: 1px dashed var(--gh-border-muted);
+    border-radius: var(--gh-radius-md);
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--gh-text-muted);
+}
+
+/* Sidebar Overlay (Mobile) */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(31, 35, 40, 0.5);
+    z-index: 1040;
+}
+
+#sidebar-overlay.show {
+    display: block;
+}
+
+/* Footer */
+footer {
+    background-color: var(--gh-bg-secondary);
+    border-top: 1px solid var(--gh-border-color);
+  color: var(--gh-text-secondary);
+    font-size: 12px;
+}
+
+/* Drop Zone (ImgToBase64) */
+#dropZone {
+    border: 2px dashed var(--gh-border-muted) !important;
+    background-color: var(--gh-bg-secondary) !important;
+    border-radius: var(--gh-radius-md);
+    transition: all 0.15s ease;
+}
+
+#dropZone:hover {
+    border-color: var(--gh-accent-emphasis) !important;
+    background-color: rgba(9, 105, 218, 0.04) !important;
+}
+
+/* Kbd Style */
+kbd {
+    background-color: var(--gh-bg-tertiary);
+    border: 1px solid var(--gh-border-color);
+  border-radius: var(--gh-radius-sm);
+    box-shadow: inset 0 -1px 0 var(--gh-border-color);
+    color: var(--gh-text-primary);
+    font-size: 11px;
+    padding: 3px 5px;
+}
+
+/* Tab Content */
+.tab-content {
+    background-color: var(--gh-bg-primary);
+    border-color: var(--gh-border-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+    #sidebar {
+        position: fixed;
+  z-index: 1050;
+        margin-left: -260px;
+    }
+
+    #sidebar.show {
+      margin-left: 0;
+  }
+
+    #ad-sidebar {
+        display: none;
+ }
+}
+
+@media (min-width: 992px) {
+    #sidebar.collapsed + #content-wrapper {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    #ad-sidebar {
+        width: 200px;
+        min-width: 200px;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gh-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gh-border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gh-text-muted);
+}

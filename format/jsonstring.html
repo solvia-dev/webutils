@@ -1,0 +1,461 @@
+---
+layout: default
+title: JSON 格式化工具
+---
+
+<div class="mb-4">
+    <h4><i class="bi bi-braces-asterisk"></i> JSON 格式化工具</h4>
+    <p class="text-muted">輸入 JSON 字串，點擊格式化按鈕轉換為可讀的縮排格式。支援語法高亮、行號顯示及壓縮功能。</p>
+</div>
+
+<div class="row">
+    <!-- 左側：輸入區 -->
+    <div class="col-md-6 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label fw-bold mb-0">Enter JSON here:</label>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="formatJSON()" title="格式化">
+                    <i class="bi bi-magic"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="copyText(this, 'inputText')" title="複製">
+                    <i class="bi bi-copy"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="clearInput()" title="清除">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="code-editor-wrapper">
+            <textarea id="inputText" class="code-editor" spellcheck="false"
+                      placeholder='{"name":"example","value":123}'></textarea>
+        </div>
+    </div>
+
+    <!-- 右側：輸出區 -->
+    <div class="col-md-6 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label fw-bold mb-0">Results:</label>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="toggleEditMode()" title="切換編輯/預覽模式" id="editModeBtn">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="minifyJSON()" title="壓縮">
+                    <i class="bi bi-arrows-collapse"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="toggleFullscreen('outputContainer')" title="全螢幕">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="copyOutputText()" title="複製">
+                    <i class="bi bi-copy"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="clearOutput()" title="清除">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="code-editor-wrapper" id="outputContainer">
+            <!-- 全螢幕關閉按鈕 -->
+            <button class="fullscreen-close-btn" onclick="closeFullscreen('outputContainer')" title="關閉全螢幕 (ESC)">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <!-- 語法高亮預覽模式 -->
+            <div class="code-output" id="codeOutput">
+                <div class="line-numbers" id="lineNumbers"></div>
+                <pre class="code-content" id="codeContent"></pre>
+            </div>
+            <!-- 編輯模式 (隱藏的 textarea) -->
+            <textarea id="outputText" class="code-editor" spellcheck="false" style="display: none;"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 選項區 -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <span class="text-muted small">縮排：</span>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button class="btn btn-outline-secondary" onclick="setIndent(2)">2 空格</button>
+                    <button class="btn btn-outline-secondary active" onclick="setIndent(4)">4 空格</button>
+                    <button class="btn btn-outline-secondary" onclick="setIndent('tab')">Tab</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 狀態提示 -->
+<div class="alert alert-success py-2" id="successAlert" style="display: none;">
+    <i class="bi bi-check-circle"></i> <span id="successMessage"></span>
+</div>
+<div class="alert alert-danger py-2" id="errorAlert" style="display: none;">
+    <i class="bi bi-exclamation-triangle"></i> <span id="errorMessage"></span>
+</div>
+
+<style>
+    .code-editor-wrapper {
+        border: 1px solid var(--gh-border-color, #d0d7de);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+        position: relative;
+    }
+
+    .code-editor {
+        width: 100%;
+        height: 450px;
+        border: none;
+        padding: 12px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        resize: none;
+        outline: none;
+        background: #fff;
+        overflow: auto;
+        white-space: pre;
+    }
+
+    .code-output {
+        display: flex;
+        height: 450px;
+        overflow: auto;
+        background: #fff;
+    }
+
+    .line-numbers {
+        flex-shrink: 0;
+        padding: 12px 8px;
+        background: #f6f8fa;
+        border-right: 1px solid #e1e4e8;
+        text-align: right;
+        user-select: none;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #8c959f;
+        min-width: 40px;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
+
+        .line-numbers span {
+            display: block;
+        }
+
+    .code-content {
+        flex: 1;
+        margin: 0;
+        padding: 12px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        white-space: pre;
+        overflow: visible;
+        background: transparent;
+        min-width: max-content;
+    }
+
+    /* JSON 語法高亮顏色 */
+    .json-key {
+        color: #0550ae;
+    }
+
+    .json-string {
+        color: #0a3069;
+    }
+
+    .json-number {
+        color: #0550ae;
+    }
+
+    .json-boolean {
+        color: #cf222e;
+    }
+
+    .json-null {
+        color: #cf222e;
+    }
+
+    .json-bracket {
+        color: #24292e;
+    }
+
+    /* 全螢幕關閉按鈕 */
+    .fullscreen-close-btn {
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10000;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 6px;
+        background: #f6f8fa;
+        color: #24292e;
+        font-size: 18px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: all 0.2s;
+    }
+
+        .fullscreen-close-btn:hover {
+            background: #e1e4e8;
+            color: #cf222e;
+        }
+
+    /* 全螢幕模式 */
+    .code-editor-wrapper.fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        border-radius: 0;
+    }
+
+        .code-editor-wrapper.fullscreen .fullscreen-close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .code-editor-wrapper.fullscreen .code-output,
+        .code-editor-wrapper.fullscreen .code-editor {
+            height: 100vh;
+        }
+
+    /* 編輯模式按鈕激活狀態 */
+    #editModeBtn.active {
+        background-color: #0969da;
+        border-color: #0969da;
+        color: #fff;
+    }
+</style>
+
+<script>
+    let indentSize = 4;
+    let useTab = false;
+    let isEditMode = false;
+
+    function formatJSON() {
+        const input = document.getElementById('inputText').value;
+
+        hideAlerts();
+
+        if (!input.trim()) {
+            showError('請輸入 JSON 字串');
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(input);
+            const indent = useTab ? '\t' : indentSize;
+            const formatted = JSON.stringify(parsed, null, indent);
+
+            // 儲存到隱藏的 textarea
+            document.getElementById('outputText').value = formatted;
+            // 顯示語法高亮
+            displayWithSyntaxHighlight(formatted);
+            // 確保是預覽模式
+            if (isEditMode) {
+                toggleEditMode();
+            }
+
+            const lines = formatted.split('\n').length;
+            showSuccess(`格式化成功！共 ${lines} 行`);
+        } catch (e) {
+            showError('JSON 格式錯誤：' + e.message);
+        }
+    }
+
+    function minifyJSON() {
+        const output = document.getElementById('outputText').value;
+
+        hideAlerts();
+
+        if (!output.trim()) {
+            showError('Results 區域沒有內容');
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(output);
+            const minified = JSON.stringify(parsed);
+
+            // 只更新到輸入區
+            document.getElementById('inputText').value = minified;
+
+            const savedChars = output.length - minified.length;
+            showSuccess(`壓縮成功！減少 ${savedChars} 字元，已更新到輸入區`);
+        } catch (e) {
+            showError('JSON 格式錯誤：' + e.message);
+        }
+    }
+
+    function toggleEditMode() {
+        const codeOutput = document.getElementById('codeOutput');
+        const outputText = document.getElementById('outputText');
+        const editModeBtn = document.getElementById('editModeBtn');
+
+        isEditMode = !isEditMode;
+
+        if (isEditMode) {
+            // 切換到編輯模式
+            codeOutput.style.display = 'none';
+            outputText.style.display = 'block';
+            editModeBtn.classList.add('active');
+            editModeBtn.title = '切換到預覽模式';
+        } else {
+            // 切換到預覽模式，同步 textarea 內容到語法高亮顯示
+            const content = outputText.value;
+            if (content.trim()) {
+                displayWithSyntaxHighlight(content);
+            }
+            codeOutput.style.display = 'flex';
+            outputText.style.display = 'none';
+            editModeBtn.classList.remove('active');
+            editModeBtn.title = '切換到編輯模式';
+        }
+    }
+
+    function displayWithSyntaxHighlight(code) {
+        const lines = code.split('\n');
+        const lineNumbersEl = document.getElementById('lineNumbers');
+        const codeContentEl = document.getElementById('codeContent');
+
+        // 生成行號
+        let lineNumbersHTML = '';
+        for (let i = 1; i <= lines.length; i++) {
+            lineNumbersHTML += `<span>${i}</span>`;
+        }
+        lineNumbersEl.innerHTML = lineNumbersHTML;
+
+        // 語法高亮
+        const highlightedCode = lines.map(line => highlightJSONLine(line)).join('\n');
+        codeContentEl.innerHTML = highlightedCode;
+    }
+
+    function highlightJSONLine(line) {
+        // HTML 實體轉換
+        let escaped = line
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // 高亮 JSON key（雙引號包圍的 key，後面接冒號）
+        escaped = escaped.replace(
+            /("[\w\u4e00-\u9fa5\-_\s]+")(\s*:)/g,
+            '<span class="json-key">$1</span>$2'
+        );
+
+        // 高亮字串值（非 key 的雙引號字串）
+        escaped = escaped.replace(
+            /:\s*("(?:[^"\\]|\\.)*")/g,
+            ': <span class="json-string">$1</span>'
+        );
+
+        // 高亮數字
+        escaped = escaped.replace(
+            /:\s*(-?\d+\.?\d*)/g,
+            ': <span class="json-number">$1</span>'
+        );
+
+        // 高亮 boolean
+        escaped = escaped.replace(
+            /:\s*(true|false)/g,
+            ': <span class="json-boolean">$1</span>'
+        );
+
+        // 高亮 null
+        escaped = escaped.replace(
+            /:\s*(null)/g,
+            ': <span class="json-null">$1</span>'
+        );
+
+        return escaped;
+    }
+
+    function setIndent(size) {
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            if (btn.textContent.includes('空格') || btn.textContent.includes('Tab')) {
+                btn.classList.remove('active');
+            }
+        });
+        event.target.classList.add('active');
+
+        if (size === 'tab') {
+            useTab = true;
+            indentSize = 1;
+        } else {
+            useTab = false;
+            indentSize = size;
+        }
+    }
+
+    function clearInput() {
+        document.getElementById('inputText').value = '';
+        hideAlerts();
+    }
+
+    function clearOutput() {
+        document.getElementById('outputText').value = '';
+        document.getElementById('lineNumbers').innerHTML = '';
+        document.getElementById('codeContent').innerHTML = '';
+        hideAlerts();
+    }
+
+    function copyOutputText() {
+        const content = document.getElementById('outputText').value;
+        if (!content) {
+            showError('沒有可複製的內容');
+            return;
+        }
+        navigator.clipboard.writeText(content).then(() => {
+            showSuccess('已複製到剪貼簿！');
+        });
+    }
+
+    function toggleFullscreen(elementId) {
+        const el = document.getElementById(elementId);
+        el.classList.add('fullscreen');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeFullscreen(elementId) {
+        const el = document.getElementById(elementId);
+        el.classList.remove('fullscreen');
+        document.body.style.overflow = '';
+    }
+
+    // ESC 鍵退出全螢幕
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            const fullscreenEl = document.querySelector('.code-editor-wrapper.fullscreen');
+            if (fullscreenEl) {
+                fullscreenEl.classList.remove('fullscreen');
+                document.body.style.overflow = '';
+            }
+        }
+    });
+
+    function showSuccess(message) {
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successAlert').style.display = 'block';
+        setTimeout(() => hideAlerts(), 3000);
+    }
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorAlert').style.display = 'block';
+    }
+
+    function hideAlerts() {
+        document.getElementById('successAlert').style.display = 'none';
+        document.getElementById('errorAlert').style.display = 'none';
+    }
+</script>

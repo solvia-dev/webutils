@@ -1,0 +1,251 @@
+---
+layout: default
+title: Base64 轉圖片
+---
+
+<div class="mb-4">
+    <h4><i class="bi bi-image"></i> Base64 轉圖片</h4>
+    <p class="text-muted">貼上 Base64 字串（支援 Data URL 或純 Base64 格式），即可轉換並預覽圖片，也可下載為檔案。</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <!-- 圖片格式選擇 -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">圖片格式（純 Base64 時使用）</label>
+                <select id="imageFormat" class="form-select">
+                    <option value="png" selected>PNG</option>
+                    <option value="jpeg">JPEG</option>
+                    <option value="gif">GIF</option>
+                    <option value="webp">WebP</option>
+                    <option value="svg+xml">SVG</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">下載檔名</label>
+                <input type="text" id="fileName" class="form-control" placeholder="image" value="image">
+            </div>
+        </div>
+
+        <!-- Base64 輸入區 -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Base64 字串</label>
+            <textarea id="base64Input" class="form-control font-monospace" rows="8"
+                      placeholder="請輸入 Base64 字串，支援以下格式：&#10;1. Data URL: data:image/png;base64,iVBORw0KGgo...&#10;2. 純 Base64: iVBORw0KGgo..." style="font-size: 0.85rem;"></textarea>
+            <div class="text-end mt-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'base64Input')" title="複製">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" onclick="convertToImage()">
+                <i class="bi bi-arrow-down-circle"></i> 轉換圖片
+            </button>
+            <button class="btn btn-outline-secondary" onclick="clearAll()">
+                <i class="bi bi-x-circle"></i> 清除
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 圖片預覽區 -->
+<div class="card mb-4" id="previewSection" style="display: none;">
+    <div class="card-header">
+        <i class="bi bi-eye"></i> 圖片預覽
+    </div>
+    <div class="card-body">
+        <div class="text-center mb-3">
+            <img id="imagePreview" class="img-fluid rounded" style="max-height: 500px; max-width: 100%;" alt="圖片預覽">
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    圖片尺寸：<span id="imageDimensions">-</span>
+                </small>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="bi bi-file-earmark"></i>
+                    預估大小：<span id="imageSize">-</span>
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-success" onclick="downloadImage()">
+                <i class="bi bi-download"></i> 下載圖片
+            </button>
+            <button class="btn btn-outline-secondary" onclick="copyImageToClipboard()">
+                <i class="bi bi-clipboard"></i> 複製圖片到剪貼簿
+            </button>
+            <button class="btn btn-outline-secondary" onclick="openInNewTab()">
+                <i class="bi bi-box-arrow-up-right"></i> 在新分頁開啟
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 錯誤提示 -->
+<div class="alert alert-danger" id="errorAlert" style="display: none;">
+    <i class="bi bi-exclamation-triangle"></i>
+    <span id="errorMessage"></span>
+</div>
+
+<script>
+    let currentDataUrl = '';
+
+    function convertToImage() {
+        const base64Input = document.getElementById('base64Input').value.trim();
+        const imageFormat = document.getElementById('imageFormat').value;
+        const errorAlert = document.getElementById('errorAlert');
+        const previewSection = document.getElementById('previewSection');
+
+        // 隱藏之前的錯誤
+        errorAlert.style.display = 'none';
+        previewSection.style.display = 'none';
+
+        if (!base64Input) {
+            showError('請輸入 Base64 字串');
+            return;
+        }
+
+        try {
+            let dataUrl = '';
+
+            // 判斷是否為 Data URL 格式
+            if (base64Input.startsWith('data:image/')) {
+                dataUrl = base64Input;
+            } else {
+                // 純 Base64，加上 Data URL 前綴
+                // 移除可能的空白和換行
+                const cleanBase64 = base64Input.replace(/\s/g, '');
+                dataUrl = `data:image/${imageFormat};base64,${cleanBase64}`;
+            }
+
+            // 驗證 Base64 是否有效
+            const base64Part = dataUrl.split(',')[1];
+            if (!base64Part || !isValidBase64(base64Part)) {
+                showError('無效的 Base64 字串，請確認格式是否正確');
+                return;
+            }
+
+            // 建立圖片物件來驗證
+            const img = new Image();
+            img.onload = function () {
+                currentDataUrl = dataUrl;
+
+                // 顯示預覽
+                document.getElementById('imagePreview').src = dataUrl;
+                document.getElementById('imageDimensions').textContent = `${img.width} x ${img.height} px`;
+
+                // 計算預估大小
+                const sizeInBytes = Math.ceil((base64Part.length * 3) / 4);
+                document.getElementById('imageSize').textContent = formatFileSize(sizeInBytes);
+
+                previewSection.style.display = 'block';
+            };
+
+            img.onerror = function () {
+                showError('無法解析圖片，請確認 Base64 字串是否為有效的圖片資料');
+            };
+
+            img.src = dataUrl;
+
+        } catch (e) {
+            showError('轉換時發生錯誤：' + e.message);
+        }
+    }
+
+    function isValidBase64(str) {
+        try {
+            // 檢查是否為有效的 Base64
+            const regex = /^[A-Za-z0-9+/]*={0,2}$/;
+            return regex.test(str) && atob(str);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    }
+
+    function showError(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        document.getElementById('errorMessage').textContent = message;
+        errorAlert.style.display = 'block';
+    }
+
+    function downloadImage() {
+        if (!currentDataUrl) return;
+
+        const fileName = document.getElementById('fileName').value || 'image';
+        const format = getFormatFromDataUrl(currentDataUrl);
+        const extension = format === 'jpeg' ? 'jpg' : format;
+
+        const link = document.createElement('a');
+        link.href = currentDataUrl;
+        link.download = `${fileName}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function getFormatFromDataUrl(dataUrl) {
+        const match = dataUrl.match(/data:image\/([^;]+);/);
+        return match ? match[1] : 'png';
+    }
+
+    async function copyImageToClipboard() {
+        if (!currentDataUrl) return;
+
+        try {
+            // 將 Data URL 轉換為 Blob
+            const response = await fetch(currentDataUrl);
+            const blob = await response.blob();
+
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type]: blob
+                })
+            ]);
+
+            alert('圖片已複製到剪貼簿！');
+        } catch (e) {
+            // 某些瀏覽器不支援複製圖片
+            alert('您的瀏覽器不支援複製圖片到剪貼簿，請使用下載功能');
+        }
+    }
+
+    function openInNewTab() {
+        if (!currentDataUrl) return;
+        window.open(currentDataUrl, '_blank');
+    }
+
+    function clearAll() {
+        document.getElementById('base64Input').value = '';
+        document.getElementById('imagePreview').src = '';
+        document.getElementById('previewSection').style.display = 'none';
+        document.getElementById('errorAlert').style.display = 'none';
+        document.getElementById('imageDimensions').textContent = '-';
+        document.getElementById('imageSize').textContent = '-';
+        currentDataUrl = '';
+    }
+
+    // 支援貼上 Base64 字串
+    document.getElementById('base64Input').addEventListener('paste', function (e) {
+        // 延遲執行，讓貼上的內容先填入
+        setTimeout(function () {
+            // 自動轉換（可選）
+            // convertToImage();
+        }, 100);
+    });
+</script>
