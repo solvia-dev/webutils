@@ -16,144 +16,174 @@ title: AES 加解密工具
         <!-- KEY 與 IV 輸入區 -->
         <div class="row mb-3">
             <div class="col-md-6">
-        <label class="form-label fw-bold">KEY</label>
-        <div class="input-group">
-         <input type="text" id="aesKey" class="form-control" placeholder="請輸入 AES KEY">
-            <button class="btn btn-outline-secondary" type="button" onclick="generateRandomKey()" title="隨機產生 KEY">
-         <i class="bi bi-shuffle"></i>
-  </button>
-        </div>
+                <label class="form-label fw-bold">KEY</label>
+                <div class="input-group">
+                    <input type="text" id="aesKey" class="form-control" placeholder="請輸入 AES KEY">
+                    <button class="btn btn-outline-secondary" type="button" onclick="generateRandomKey()"
+                        title="隨機產生 KEY">
+                        <i class="bi bi-shuffle"></i>
+                    </button>
+                </div>
             </div>
             <div class="col-md-6">
-    <label class="form-label fw-bold">IV</label>
-    <div class="input-group">
-            <input type="text" id="aesIV" class="form-control" placeholder="請輸入 AES IV">
-            <button class="btn btn-outline-secondary" type="button" onclick="generateRandomIV()" title="隨機產生 IV">
-       <i class="bi bi-shuffle"></i>
-            </button>
-        </div>
-         </div>
+                <label class="form-label fw-bold">IV</label>
+                <div class="input-group">
+                    <input type="text" id="aesIV" class="form-control" placeholder="請輸入 AES IV">
+                    <button class="btn btn-outline-secondary" type="button" onclick="generateRandomIV()"
+                        title="隨機產生 IV">
+                        <i class="bi bi-shuffle"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="row align-items-center">
             <!-- 左側：原始文字 -->
             <div class="col-md-5">
                 <label class="form-label fw-bold">原始文字</label>
-       <textarea id="inputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
-         <div class="text-end mt-2">
-                  <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'inputText')" title="複製">
-    <i class="bi bi-copy"></i>
- </button>
-       </div>
-      </div>
-
-         <!-- 中間：功能按鈕 -->
-  <div class="col-md-2 text-center d-flex flex-column justify-content-center align-items-center gap-3">
-     <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
-         style="width: 44px; height: 36px;" onclick="processAES('encrypt')" title="加密 (Encrypt)">
-       <i class="bi bi-arrow-right"></i>
-</button>
-    <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
-           style="width: 44px; height: 36px;" onclick="processAES('decrypt')" title="解密 (Decrypt)">
-           <i class="bi bi-arrow-left"></i>
-</button>
-</div>
-
-            <!-- 右側：結果文字 -->
-            <div class="col-md-5">
-     <label class="form-label fw-bold">結果文字</label>
-           <textarea id="outputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
-        <div class="text-end mt-2">
-<button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'outputText')" title="複製">
-               <i class="bi bi-copy"></i>
-        </button>
-          </div>
+                <textarea id="inputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="text-muted small" id="inputCount">0 字</div>
+                    <div class="text-end">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'inputText')"
+                            title="複製">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
-   </div>
+
+            <!-- 中間：功能按鈕 -->
+            <div class="col-md-2 text-center d-flex flex-column justify-content-center align-items-center gap-3">
+                <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
+                    style="width:44px; height:36px;" onclick="processAES('encrypt')" title="加密 (Encrypt)">
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+                <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
+                    style="width:44px; height:36px;" onclick="processAES('decrypt')" title="解密 (Decrypt)">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+            </div>
+
+            <!--右側：結果文字 -->
+            <div class="col-md-5">
+                <label class="form-label fw-bold">結果文字</label>
+                <textarea id="outputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="text-muted small" id="outputCount">0 字</div>
+                    <div class="text-end">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'outputText')"
+                            title="複製">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // 產生隨機字串 (用於 KEY 和 IV)
+    //產生隨機字串 (用於 KEY 和 IV)
     function generateRandomString(length) {
- const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
         const randomValues = new Uint8Array(length);
         crypto.getRandomValues(randomValues);
         for (let i = 0; i < length; i++) {
-         result += chars[randomValues[i] % chars.length];
+            result += chars[randomValues[i] % chars.length];
         }
         return result;
     }
 
-    // 隨機產生 AES KEY (32 字元 = 256 bits)
+    // 隨機產生 AES KEY (32 字元 =256 bits)
     function generateRandomKey() {
         document.getElementById('aesKey').value = generateRandomString(32);
     }
 
-    // 隨機產生 AES IV (16 字元 = 128 bits)
+    // 隨機產生 AES IV (16 字元 =128 bits)
     function generateRandomIV() {
         document.getElementById('aesIV').value = generateRandomString(16);
     }
 
     function processAES(action) {
-   const key = document.getElementById('aesKey').value;
+        const key = document.getElementById('aesKey').value;
         const iv = document.getElementById('aesIV').value;
 
         if (!key) {
-     alert('請輸入 AES KEY');
- return;
+            alert('請輸入 AES KEY');
+            return;
         }
 
         if (!iv) {
             alert('請輸入 AES IV');
-      return;
- }
+            return;
+        }
 
-   // 依據行為決定輸入輸出的框
+        //依據行為決定輸入輸出的框
         const inputId = action === 'encrypt' ? 'inputText' : 'outputText';
         const outputId = action === 'encrypt' ? 'outputText' : 'inputText';
 
-  const input = document.getElementById(inputId).value;
+        const input = document.getElementById(inputId).value;
         const outputEl = document.getElementById(outputId);
 
-if (!input) {
-        return;
- }
+        if (!input) {
+            return;
+        }
 
         try {
-            // 將 KEY 和 IV 轉換為 CryptoJS 格式
+            // 將 KEY 和 IV轉換為 CryptoJS 格式
             const keyUtf8 = CryptoJS.enc.Utf8.parse(key);
             const ivUtf8 = CryptoJS.enc.Utf8.parse(iv);
 
-   let result = '';
+            let result = '';
 
             if (action === 'encrypt') {
-     // AES 加密
-   const encrypted = CryptoJS.AES.encrypt(input, keyUtf8, {
-     iv: ivUtf8,
-      mode: CryptoJS.mode.CBC,
-             padding: CryptoJS.pad.Pkcs7
-         });
-       result = encrypted.toString(); // Base64 格式輸出
+                // AES 加密
+                const encrypted = CryptoJS.AES.encrypt(input, keyUtf8, {
+                    iv: ivUtf8,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                result = encrypted.toString(); // Base64 格式輸出
             } else {
-     // AES 解密
-      const decrypted = CryptoJS.AES.decrypt(input, keyUtf8, {
- iv: ivUtf8,
-         mode: CryptoJS.mode.CBC,
-             padding: CryptoJS.pad.Pkcs7
-     });
-    result = decrypted.toString(CryptoJS.enc.Utf8);
+                // AES 解密
+                const decrypted = CryptoJS.AES.decrypt(input, keyUtf8, {
+                    iv: ivUtf8,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                result = decrypted.toString(CryptoJS.enc.Utf8);
 
-         if (!result) {
-             throw new Error('解密失敗，請確認 KEY、IV 及密文是否正確');
-              }
+                if (!result) {
+                    throw new Error('解密失敗，請確認 KEY、IV及密文是否正確');
+                }
             }
 
-        outputEl.value = result;
+            outputEl.value = result;
+            updateCounts();
 
         } catch (e) {
             alert(`${action === 'encrypt' ? '加密' : '解密'}時發生錯誤！\n${e.message || '請確認您的輸入內容是否正確。'}`);
         }
- }
+    }
+
+    function updateCounts() {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        const inCountEl = document.getElementById('inputCount');
+        const outCountEl = document.getElementById('outputCount');
+
+        inCountEl.innerText = `${input.value.length} 字`;
+        outCountEl.innerText = `${output.value.length} 字`;
+    }
+
+    //監聽輸入事件以即時更新字數
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        input.addEventListener('input', updateCounts);
+        output.addEventListener('input', updateCounts);
+        updateCounts();
+    });
 </script>

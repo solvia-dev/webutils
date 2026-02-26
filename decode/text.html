@@ -26,33 +26,39 @@ title: 編解碼工具
     <div class="col-md-5">
         <label class="form-label fw-bold">原始文字</label>
         <textarea id="inputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
-        <div class="text-end mt-2">
-            <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'inputText')" title="複製">
-                <i class="bi bi-copy"></i>
-            </button>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-muted small" id="inputCount">0 字</div>
+            <div class="text-end">
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'inputText')" title="複製">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- 中間：功能按鈕 -->
     <div class="col-md-2 text-center d-flex flex-column justify-content-center align-items-center gap-3">
         <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
-            style="width: 44px; height: 36px;" onclick="processText('encode')" title="編碼 (Encode)">
+            style="width:44px; height:36px;" onclick="processText('encode')" title="編碼 (Encode)">
             <i class="bi bi-arrow-right"></i>
         </button>
         <button class="btn btn-outline-secondary d-flex justify-content-center align-items-center"
-            style="width: 44px; height: 36px;" onclick="processText('decode')" title="解碼 (Decode)">
+            style="width:44px; height:36px;" onclick="processText('decode')" title="解碼 (Decode)">
             <i class="bi bi-arrow-left"></i>
         </button>
     </div>
 
-    <!-- 右側：結果文字 -->
+    <!--右側：結果文字 -->
     <div class="col-md-5">
         <label class="form-label fw-bold" id="resultLabel">結果文字 (base64)</label>
         <textarea id="outputText" class="form-control" rows="15" style="resize: vertical;"></textarea>
-        <div class="text-end mt-2">
-            <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'outputText')" title="複製">
-                <i class="bi bi-copy"></i>
-            </button>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-muted small" id="outputCount">0 字</div>
+            <div class="text-end">
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyText(this, 'outputText')" title="複製">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -71,10 +77,12 @@ title: 編解碼工具
         if (btnElement) {
             btnElement.classList.add('active');
         }
+
+        updateCounts();
     }
 
     function processText(action) {
-        // 依據行為決定輸入輸出的框
+        //依據行為決定輸入輸出的框
         const inputId = action === 'encode' ? 'inputText' : 'outputText';
         const outputId = action === 'encode' ? 'outputText' : 'inputText';
 
@@ -111,6 +119,7 @@ title: 編解碼工具
             }
 
             outputEl.value = result;
+            updateCounts();
 
         } catch (e) {
             alert(`轉換時發生錯誤！\n請確認您的輸入內容是否符合該格式之解碼規則。`);
@@ -127,5 +136,24 @@ title: 編解碼工具
         var txt = document.createElement("textarea");
         txt.innerHTML = str;
         return txt.value;
-    }    
+    }
+
+    function updateCounts() {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        const inCountEl = document.getElementById('inputCount');
+        const outCountEl = document.getElementById('outputCount');
+
+        inCountEl.innerText = `${input.value.length} 字`;
+        outCountEl.innerText = `${output.value.length} 字`;
+    }
+
+    //監聽輸入事件以即時更新字數
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('inputText');
+        const output = document.getElementById('outputText');
+        input.addEventListener('input', updateCounts);
+        output.addEventListener('input', updateCounts);
+        updateCounts();
+    });
 </script>

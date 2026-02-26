@@ -27,7 +27,9 @@ title: JSON 格式化工具
         </div>
         <div class="code-editor-wrapper">
             <textarea id="inputText" class="code-editor" spellcheck="false"
-                      placeholder='{"name":"example","value":123}'></textarea>
+                      placeholder='{"name":"example","value":123}'>
+{"orderID":12345,"shopperName":"John Smith","shopperEmail":"johnsmith@example.com","contents":[{"productID":34,"productName":"SuperWidget","quantity":1}]}
+            </textarea>
         </div>
     </div>
 
@@ -61,7 +63,7 @@ title: JSON 格式化工具
             <!-- 語法高亮預覽模式 -->
             <div class="code-output" id="codeOutput">
                 <div class="line-numbers" id="lineNumbers"></div>
-                <pre class="code-content" id="codeContent"></pre>
+                <div class="code-content" id="codeContent"></div>
             </div>
             <!-- 編輯模式 (隱藏的 textarea) -->
             <textarea id="outputText" class="code-editor" spellcheck="false" style="display: none;"></textarea>
@@ -109,7 +111,7 @@ title: JSON 格式化工具
         padding: 12px;
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 12px;
-        line-height: 1.6;
+        line-height: 20px;
         resize: none;
         outline: none;
         background: #fff;
@@ -133,7 +135,6 @@ title: JSON 格式化工具
         user-select: none;
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 12px;
-        line-height: 1.6;
         color: #8c959f;
         min-width: 40px;
         position: sticky;
@@ -141,9 +142,16 @@ title: JSON 格式化工具
         z-index: 1;
     }
 
-        .line-numbers span {
-            display: block;
-        }
+    .line-numbers .line-number {
+        display: block;
+        height: 20px;
+        line-height: 20px;
+        padding-right: 4px;
+    }
+
+    .line-numbers .line-number.highlight {
+        background: rgba(9, 105, 218, 0.1);
+    }
 
     .code-content {
         flex: 1;
@@ -151,37 +159,34 @@ title: JSON 格式化工具
         padding: 12px;
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 12px;
-        line-height: 1.6;
         white-space: pre;
         overflow: visible;
         background: transparent;
         min-width: max-content;
     }
 
+    .code-content .code-line {
+        display: block;
+        height: 20px;
+        line-height: 20px;
+        white-space: pre;
+    }
+
+    .code-content .code-line:hover {
+        background: rgba(9, 105, 218, 0.06);
+    }
+
+    .code-content .code-line.highlight {
+        background: rgba(9, 105, 218, 0.1);
+    }
+
     /* JSON 語法高亮顏色 */
-    .json-key {
-        color: #0550ae;
-    }
-
-    .json-string {
-        color: #0a3069;
-    }
-
-    .json-number {
-        color: #0550ae;
-    }
-
-    .json-boolean {
-        color: #cf222e;
-    }
-
-    .json-null {
-        color: #cf222e;
-    }
-
-    .json-bracket {
-        color: #24292e;
-    }
+    .json-key { color: #0550ae; }
+    .json-string { color: #0a3069; }
+    .json-number { color: #0550ae; }
+    .json-boolean { color: #cf222e; }
+    .json-null { color: #cf222e; }
+    .json-bracket { color: #24292e; }
 
     /* 全螢幕關閉按鈕 */
     .fullscreen-close-btn {
@@ -202,10 +207,10 @@ title: JSON 格式化工具
         transition: all 0.2s;
     }
 
-        .fullscreen-close-btn:hover {
-            background: #e1e4e8;
-            color: #cf222e;
-        }
+    .fullscreen-close-btn:hover {
+        background: #e1e4e8;
+        color: #cf222e;
+    }
 
     /* 全螢幕模式 */
     .code-editor-wrapper.fullscreen {
@@ -218,16 +223,16 @@ title: JSON 格式化工具
         border-radius: 0;
     }
 
-        .code-editor-wrapper.fullscreen .fullscreen-close-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .code-editor-wrapper.fullscreen .fullscreen-close-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-        .code-editor-wrapper.fullscreen .code-output,
-        .code-editor-wrapper.fullscreen .code-editor {
-            height: 100vh;
-        }
+    .code-editor-wrapper.fullscreen .code-output,
+    .code-editor-wrapper.fullscreen .code-editor {
+        height: 100vh;
+    }
 
     /* 編輯模式按鈕激活狀態 */
     #editModeBtn.active {
@@ -257,11 +262,8 @@ title: JSON 格式化工具
             const indent = useTab ? '\t' : indentSize;
             const formatted = JSON.stringify(parsed, null, indent);
 
-            // 儲存到隱藏的 textarea
             document.getElementById('outputText').value = formatted;
-            // 顯示語法高亮
             displayWithSyntaxHighlight(formatted);
-            // 確保是預覽模式
             if (isEditMode) {
                 toggleEditMode();
             }
@@ -287,7 +289,6 @@ title: JSON 格式化工具
             const parsed = JSON.parse(output);
             const minified = JSON.stringify(parsed);
 
-            // 只更新到輸入區
             document.getElementById('inputText').value = minified;
 
             const savedChars = output.length - minified.length;
@@ -329,78 +330,111 @@ title: JSON 格式化工具
         const codeContentEl = document.getElementById('codeContent');
 
         // 生成行號
-        let lineNumbersHTML = '';
-        for (let i = 1; i <= lines.length; i++) {
-            lineNumbersHTML += `<span>${i}</span>`;
-        }
-        lineNumbersEl.innerHTML = lineNumbersHTML;
+        lineNumbersEl.innerHTML = lines.map((_, idx) => 
+            `<span class="line-number" data-line="${idx + 1}">${idx + 1}</span>`
+  ).join('');
 
-        // 語法高亮
-        const highlightedCode = lines.map(line => highlightJSONLine(line)).join('\n');
-        codeContentEl.innerHTML = highlightedCode;
+        // 語法高亮，每行用 div.code-line 包裝
+ codeContentEl.innerHTML = lines.map((line, idx) => {
+const highlighted = highlightJSONLine(line) || '&nbsp;';
+        return `<div class="code-line" data-line="${idx + 1}">${highlighted}</div>`;
+    }).join('');
+
+     bindLineHoverEvents();
+    }
+
+    function bindLineHoverEvents() {
+        const lineNumbersEl = document.getElementById('lineNumbers');
+        const codeContentEl = document.getElementById('codeContent');
+        const codeLines = codeContentEl.querySelectorAll('.code-line');
+  const lineNumbers = lineNumbersEl.querySelectorAll('.line-number');
+
+        codeLines.forEach(lineEl => {
+      lineEl.addEventListener('mouseenter', function() {
+ const ln = this.getAttribute('data-line');
+   this.classList.add('highlight');
+    const numEl = lineNumbersEl.querySelector(`.line-number[data-line="${ln}"]`);
+        if (numEl) numEl.classList.add('highlight');
+         });
+            lineEl.addEventListener('mouseleave', function() {
+     const ln = this.getAttribute('data-line');
+     this.classList.remove('highlight');
+     const numEl = lineNumbersEl.querySelector(`.line-number[data-line="${ln}"]`);
+    if (numEl) numEl.classList.remove('highlight');
+    });
+        });
+
+        lineNumbers.forEach(numEl => {
+       numEl.addEventListener('mouseenter', function() {
+       const ln = this.getAttribute('data-line');
+        this.classList.add('highlight');
+          const codeEl = codeContentEl.querySelector(`.code-line[data-line="${ln}"]`);
+    if (codeEl) codeEl.classList.add('highlight');
+       });
+            numEl.addEventListener('mouseleave', function() {
+                const ln = this.getAttribute('data-line');
+    this.classList.remove('highlight');
+ const codeEl = codeContentEl.querySelector(`.code-line[data-line="${ln}"]`);
+              if (codeEl) codeEl.classList.remove('highlight');
+            });
+   });
     }
 
     function highlightJSONLine(line) {
-        // HTML 實體轉換
         let escaped = line
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
+     .replace(/&/g, '&amp;')
+   .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-        // 高亮 JSON key（雙引號包圍的 key，後面接冒號）
-        escaped = escaped.replace(
+ escaped = escaped.replace(
             /("[\w\u4e00-\u9fa5\-_\s]+")(\s*:)/g,
             '<span class="json-key">$1</span>$2'
-        );
+    );
 
-        // 高亮字串值（非 key 的雙引號字串）
+   escaped = escaped.replace(
+        /:\s*("(?:[^"\\]|\\.)*")/g,
+      ': <span class="json-string">$1</span>'
+      );
+
         escaped = escaped.replace(
-            /:\s*("(?:[^"\\]|\\.)*")/g,
-            ': <span class="json-string">$1</span>'
-        );
+     /:\s*(-?\d+\.?\d*)/g,
+         ': <span class="json-number">$1</span>'
+      );
 
-        // 高亮數字
-        escaped = escaped.replace(
-            /:\s*(-?\d+\.?\d*)/g,
-            ': <span class="json-number">$1</span>'
-        );
-
-        // 高亮 boolean
         escaped = escaped.replace(
             /:\s*(true|false)/g,
-            ': <span class="json-boolean">$1</span>'
+ ': <span class="json-boolean">$1</span>'
         );
 
-        // 高亮 null
         escaped = escaped.replace(
-            /:\s*(null)/g,
-            ': <span class="json-null">$1</span>'
-        );
+         /:\s*(null)/g,
+         ': <span class="json-null">$1</span>'
+     );
 
-        return escaped;
+   return escaped;
     }
 
     function setIndent(size) {
         document.querySelectorAll('.btn-group .btn').forEach(btn => {
-            if (btn.textContent.includes('空格') || btn.textContent.includes('Tab')) {
-                btn.classList.remove('active');
-            }
-        });
+   if (btn.textContent.includes('空格') || btn.textContent.includes('Tab')) {
+    btn.classList.remove('active');
+     }
+});
         event.target.classList.add('active');
 
         if (size === 'tab') {
-            useTab = true;
-            indentSize = 1;
-        } else {
-            useTab = false;
-            indentSize = size;
+      useTab = true;
+   indentSize = 1;
+ } else {
+  useTab = false;
+  indentSize = size;
         }
     }
 
     function clearInput() {
-        document.getElementById('inputText').value = '';
+   document.getElementById('inputText').value = '';
         hideAlerts();
-    }
+}
 
     function clearOutput() {
         document.getElementById('outputText').value = '';
@@ -421,25 +455,24 @@ title: JSON 格式化工具
     }
 
     function toggleFullscreen(elementId) {
-        const el = document.getElementById(elementId);
+   const el = document.getElementById(elementId);
         el.classList.add('fullscreen');
-        document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
     }
 
     function closeFullscreen(elementId) {
-        const el = document.getElementById(elementId);
-        el.classList.remove('fullscreen');
+     const el = document.getElementById(elementId);
+   el.classList.remove('fullscreen');
         document.body.style.overflow = '';
     }
 
-    // ESC 鍵退出全螢幕
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            const fullscreenEl = document.querySelector('.code-editor-wrapper.fullscreen');
-            if (fullscreenEl) {
-                fullscreenEl.classList.remove('fullscreen');
-                document.body.style.overflow = '';
-            }
+ if (e.key === 'Escape') {
+         const fullscreenEl = document.querySelector('.code-editor-wrapper.fullscreen');
+ if (fullscreenEl) {
+           fullscreenEl.classList.remove('fullscreen');
+       document.body.style.overflow = '';
+   }
         }
     });
 
@@ -447,15 +480,15 @@ title: JSON 格式化工具
         document.getElementById('successMessage').textContent = message;
         document.getElementById('successAlert').style.display = 'block';
         setTimeout(() => hideAlerts(), 3000);
-    }
+ }
 
     function showError(message) {
         document.getElementById('errorMessage').textContent = message;
-        document.getElementById('errorAlert').style.display = 'block';
+     document.getElementById('errorAlert').style.display = 'block';
     }
 
     function hideAlerts() {
         document.getElementById('successAlert').style.display = 'none';
-        document.getElementById('errorAlert').style.display = 'none';
+ document.getElementById('errorAlert').style.display = 'none';
     }
 </script>
