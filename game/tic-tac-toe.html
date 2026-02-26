@@ -1,0 +1,218 @@
+---
+layout: default
+title: "井字遊戲 (Tic-Tac-Toe)"
+---
+
+<style>
+    .tic-tac-toe-board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .cell {
+        aspect-ratio: 1 / 1;
+        background-color: var(--bs-light);
+        border: 2px solid var(--bs-border-color);
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 4rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        color: var(--bs-body-color);
+    }
+
+    .cell:hover:not(.taken) {
+        background-color: var(--bs-secondary-bg);
+    }
+
+    .cell:active:not(.taken) {
+        transform: scale(0.95);
+    }
+
+    .cell.taken {
+        cursor: not-allowed;
+    }
+
+    .cell.x {
+        color: var(--bs-primary);
+    }
+
+    .cell.o {
+        color: var(--bs-danger);
+    }
+
+    .cell.winner-cell {
+        background-color: rgba(25, 135, 84, 0.2);
+        /* 淡淡的綠色標示勝利 */
+        border-color: var(--bs-success);
+        animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+        from {
+            transform: scale(1);
+        }
+
+        to {
+            transform: scale(1.05);
+        }
+    }
+
+    #game-status {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        min-height: 2.5rem;
+    }
+</style>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-controller me-2 text-primary"></i>井字遊戲</h5>
+    </div>
+    <div class="card-body">
+        <div id="game-status" class="text-primary">輪到 X 玩家</div>
+
+        <div class="tic-tac-toe-board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="reset-btn" class="btn btn-primary px-4 py-2 fw-bold">
+                <i class="bi bi-arrow-clockwise me-2"></i>重新開始
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const board = document.getElementById("board");
+        const cells = document.querySelectorAll(".cell");
+        const statusDisplay = document.getElementById("game-status");
+        const resetBtn = document.getElementById("reset-btn");
+
+        let gameActive = true;
+        let currentPlayer = "X";
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+
+        const winningConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        const winningMessage = () => `🎉 玩家 ${currentPlayer} 獲勝！`;
+        const drawMessage = () => `🤝 遊戲平手！`;
+        const currentPlayerTurn = () => `輪到 ${currentPlayer} 玩家`;
+
+        statusDisplay.innerHTML = currentPlayerTurn();
+
+        function handleCellPlayed(clickedCell, clickedCellIndex) {
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.innerHTML = currentPlayer;
+            clickedCell.classList.add("taken");
+            clickedCell.classList.add(currentPlayer.toLowerCase());
+        }
+
+        function handlePlayerChange() {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+
+            // 根據玩家切換文字顏色
+            statusDisplay.className = currentPlayer === "X" ? "text-primary" : "text-danger";
+            statusDisplay.innerHTML = currentPlayerTurn();
+        }
+
+        function handleResultValidation() {
+            let roundWon = false;
+            let winningCells = [];
+
+            for (let i = 0; i <= 7; i++) {
+                const winCondition = winningConditions[i];
+                let a = gameState[winCondition[0]];
+                let b = gameState[winCondition[1]];
+                let c = gameState[winCondition[2]];
+
+                if (a === "" || b === "" || c === "") {
+                    continue;
+                }
+                if (a === b && b === c) {
+                    roundWon = true;
+                    winningCells = winCondition;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.innerHTML = winningMessage();
+                statusDisplay.className = "text-success fw-bold";
+                gameActive = false;
+
+                // 標示獲勝的格子
+                winningCells.forEach(index => {
+                    cells[index].classList.add("winner-cell");
+                });
+                return;
+            }
+
+            let roundDraw = !gameState.includes("");
+            if (roundDraw) {
+                statusDisplay.innerHTML = drawMessage();
+                statusDisplay.className = "text-warning fw-bold text-dark";
+                gameActive = false;
+                return;
+            }
+
+            handlePlayerChange();
+        }
+
+        function handleCellClick(clickedCellEvent) {
+            const clickedCell = clickedCellEvent.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute("data-index"));
+
+            if (gameState[clickedCellIndex] !== "" || !gameActive) {
+                return;
+            }
+
+            handleCellPlayed(clickedCell, clickedCellIndex);
+            handleResultValidation();
+        }
+
+        function handleRestartGame() {
+            gameActive = true;
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusDisplay.innerHTML = currentPlayerTurn();
+            statusDisplay.className = "text-primary";
+
+            cells.forEach(cell => {
+                cell.innerHTML = "";
+                cell.classList.remove("taken", "x", "o", "winner-cell");
+            });
+        }
+
+        cells.forEach(cell => cell.addEventListener("click", handleCellClick));
+        resetBtn.addEventListener("click", handleRestartGame);
+    });
+</script>
