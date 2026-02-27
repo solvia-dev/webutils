@@ -1,0 +1,501 @@
+---
+layout: default
+title: "數獨遊戲 (Sudoku)"
+---
+
+<style>
+    .sudoku-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .sudoku-board {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        width: 100%;
+        max-width: 400px;
+        background-color: var(--bs-border-color);
+        border: 2px solid var(--bs-dark);
+        gap: 1px;
+    }
+
+    .sudoku-cell {
+        aspect-ratio: 1 / 1;
+        background-color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.25rem;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+        color: var(--bs-primary);
+    }
+
+    /* 粗體的分隔線 (3x3 區塊) */
+    .sudoku-cell:nth-child(3n) {
+        border-right: 2px solid var(--bs-dark);
+    }
+
+    .sudoku-cell:nth-child(9n) {
+        border-right: none;
+        /* 最右邊不加，由外框負責 */
+    }
+
+    .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+    .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+        border-bottom: 2px solid var(--bs-dark);
+    }
+
+    @media (min-width: 768px) {
+        .sudoku-board {
+            max-width: 450px;
+        }
+
+        .sudoku-cell {
+            font-size: 1.5rem;
+        }
+    }
+
+    .sudoku-cell.fixed {
+        font-weight: bold;
+        color: var(--bs-gray-800);
+        background-color: var(--bs-light);
+        cursor: default;
+    }
+
+    .sudoku-cell:hover:not(.fixed):not(.selected) {
+        background-color: var(--bs-primary-bg-subtle);
+    }
+
+    .sudoku-cell.selected {
+        background-color: var(--bs-primary);
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .sudoku-cell.highlight-number {
+        background-color: var(--bs-secondary-bg);
+    }
+
+    .sudoku-cell.error {
+        color: var(--bs-danger);
+        background-color: var(--bs-danger-bg-subtle);
+    }
+
+    /* 數字鍵盤 */
+    .numpad {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        width: 100%;
+        max-width: 400px;
+        margin-top: 10px;
+    }
+
+    .numpad-btn {
+        aspect-ratio: 1.5 / 1;
+        font-size: 1.25rem;
+        font-weight: bold;
+        border-radius: 8px;
+    }
+
+    .numpad-btn.erase {
+        grid-column: span 2;
+    }
+
+    .header-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 5px;
+    }
+
+    @media (min-width: 768px) {
+
+        .header-controls,
+        .numpad {
+            max-width: 450px;
+        }
+    }
+
+    .difficulty-select {
+        width: auto;
+    }
+
+    .timer-display {
+        font-family: monospace;
+        font-size: 1.2rem;
+        font-weight: bold;
+        background-color: var(--bs-light);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--bs-border-color);
+    }
+</style>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>數獨 (Sudoku)</h5>
+    </div>
+    <div class="card-body p-3 p-md-4">
+
+        <div class="sudoku-container">
+            <!-- Controls Header -->
+            <div class="header-controls">
+                <select id="difficulty-select" class="form-select form-select-sm difficulty-select">
+                    <option value="easy">簡單 (Easy)</option>
+                    <option value="medium" selected>中等 (Medium)</option>
+                    <option value="hard">困難 (Hard)</option>
+                </select>
+
+                <div class="timer-display" id="timer">00:00</div>
+
+                <button id="new-game-btn" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-play-fill"></i> 新遊戲
+                </button>
+            </div>
+
+            <!-- Game Board -->
+            <div class="sudoku-board" id="sudoku-board">
+                <!-- 81 Cells will be generated here -->
+            </div>
+
+            <!-- Number Pad for Mobile/Mouse input -->
+            <div class="numpad" id="numpad">
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="1">1</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="2">2</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="3">3</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="4">4</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="5">5</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="6">6</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="7">7</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="8">8</button>
+                <button class="btn btn-light border numpad-btn shadow-sm" data-val="9">9</button>
+                <button class="btn btn-light border text-secondary numpad-btn erase shadow-sm" data-val="0"><i
+                        class="bi bi-eraser"></i> 擦除</button>
+            </div>
+
+            <div id="game-message" class="alert alert-success mt-2 mb-0 d-none w-100 text-center"
+                style="max-width: 400px;">
+                🎉 恭喜完成！耗時：<strong id="final-time"></strong>
+            </div>
+
+            <!-- 遊戲說明區塊 -->
+            <div class="card mt-2 shadow-sm w-100" style="max-width: 400px;">
+                <div class="card-header bg-light py-2">
+                    <i class="bi bi-info-circle me-1"></i> 遊戲說明
+                </div>
+                <div class="card-body p-3" style="font-size: 0.95rem; color: var(--bs-gray-700);">
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-1"><strong>目標：</strong> 將數字 1 到 9 填入 9×9 的網格中。</li>
+                        <li class="mb-1"><strong>規則：</strong> 每一行、每一列以及每一個粗線標示的 3×3 九宮格內，數字 1~9 皆只能出現一次。</li>
+                        <li class="mb-1"><strong>電腦操作：</strong> 點選空格後，可直接用鍵盤輸入數字，或使用方向鍵（⬅⬆⬇➡）移動游標；按 Delete 或 Backspace
+                            鍵可清除數字。</li>
+                        <li><strong>手機操作：</strong> 點擊欲填寫的空格，接著點擊下方的數字鍵盤來輸入；點擊「擦除」即可清空該格。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const boardElement = document.getElementById("sudoku-board");
+        const numpadButtons = document.querySelectorAll(".numpad-btn");
+        const difficultySelect = document.getElementById("difficulty-select");
+        const newGameBtn = document.getElementById("new-game-btn");
+        const timerDisplay = document.getElementById("timer");
+        const gameMessage = document.getElementById("game-message");
+        const finalTimeDisplay = document.getElementById("final-time");
+
+        let board = [];       // Current player board (0 for empty)
+        let solution = [];    // Solved board
+        let fixedCells = [];  // Boolean array tracking fixed given numbers
+        let selectedCellIndex = -1;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let gameActive = false;
+
+        // --- Sudoku Generation Logic ---
+        function generateSudoku(holes) {
+            // Create empty board
+            let newBoard = Array(81).fill(0);
+
+            // Fill diagonal 3x3 boxes first (they are independent of each other)
+            fillBox(newBoard, 0, 0);
+            fillBox(newBoard, 3, 3);
+            fillBox(newBoard, 6, 6);
+
+            // Solve the rest to get a complete valid board
+            solveSudoku(newBoard);
+
+            // Save solution
+            solution = [...newBoard];
+
+            // Remove numbers based on difficulty to create the puzzle
+            removeNumbers(newBoard, holes);
+
+            return newBoard;
+        }
+
+        function fillBox(tempBoard, rowStart, colStart) {
+            let num;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    do {
+                        num = Math.floor(Math.random() * 9) + 1;
+                    } while (!isSafeInBox(tempBoard, rowStart, colStart, num));
+                    tempBoard[(rowStart + i) * 9 + (colStart + j)] = num;
+                }
+            }
+        }
+
+        function isSafeInBox(tempBoard, rowStart, colStart, num) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (tempBoard[(rowStart + i) * 9 + (colStart + j)] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function isSafe(tempBoard, row, col, num) {
+            // Row & Col check
+            for (let x = 0; x < 9; x++) {
+                if (tempBoard[row * 9 + x] === num || tempBoard[x * 9 + col] === num) return false;
+            }
+            // Box check
+            let startRow = row - row % 3;
+            let startCol = col - col % 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (tempBoard[(i + startRow) * 9 + (j + startCol)] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function solveSudoku(tempBoard) {
+            let row = -1;
+            let col = -1;
+            let isEmpty = true;
+            for (let i = 0; i < 81; i++) {
+                if (tempBoard[i] === 0) {
+                    row = Math.floor(i / 9);
+                    col = i % 9;
+                    isEmpty = false;
+                    break;
+                }
+            }
+            // No empty space left
+            if (isEmpty) return true;
+
+            for (let num = 1; num <= 9; num++) {
+                if (isSafe(tempBoard, row, col, num)) {
+                    tempBoard[row * 9 + col] = num;
+                    if (solveSudoku(tempBoard)) return true;
+                    tempBoard[row * 9 + col] = 0; // backtrack
+                }
+            }
+            return false;
+        }
+
+        function removeNumbers(tempBoard, count) {
+            while (count !== 0) {
+                let cellId = Math.floor(Math.random() * 81);
+                if (tempBoard[cellId] !== 0) {
+                    count--;
+                    tempBoard[cellId] = 0;
+                }
+            }
+        }
+
+        // --- Timer Logic ---
+        function formatTime(totalSeconds) {
+            let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            let s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            timerDisplay.innerText = "00:00";
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                timerDisplay.innerText = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // --- Game Setup & Interaction ---
+        function initGame() {
+            gameMessage.classList.add("d-none");
+
+            let difficulty = difficultySelect.value;
+            let removeCount = 40; // Default medium
+            if (difficulty === 'easy') removeCount = 30;
+            else if (difficulty === 'hard') removeCount = 55;
+
+            board = generateSudoku(removeCount);
+            fixedCells = board.map(val => val !== 0);
+            selectedCellIndex = -1;
+            gameActive = true;
+
+            renderBoard();
+            startTimer();
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                let cell = document.createElement("div");
+                cell.className = "sudoku-cell";
+                cell.dataset.index = i;
+
+                if (board[i] !== 0) {
+                    cell.innerText = board[i];
+                }
+
+                if (fixedCells[i]) {
+                    cell.classList.add("fixed");
+                }
+
+                cell.addEventListener("click", () => handleCellClick(i));
+                boardElement.appendChild(cell);
+            }
+        }
+
+        function updateBoardVisuals() {
+            const cells = boardElement.children;
+            const targetNumber = selectedCellIndex !== -1 && board[selectedCellIndex] !== 0
+                ? board[selectedCellIndex]
+                : null;
+
+            for (let i = 0; i < 81; i++) {
+                cells[i].classList.remove("selected", "highlight-number", "error");
+                cells[i].innerText = board[i] === 0 ? "" : board[i];
+
+                if (i === selectedCellIndex) {
+                    cells[i].classList.add("selected");
+                } else if (targetNumber && board[i] === targetNumber) {
+                    // Highlight matching numbers across the board
+                    cells[i].classList.add("highlight-number");
+                }
+
+                // Show red if it's filled and conflicts with rules (basic validation)
+                if (board[i] !== 0 && !fixedCells[i]) {
+                    if (!checkValidMove(i, board[i])) {
+                        cells[i].classList.add("error");
+                    }
+                }
+            }
+        }
+
+        function checkValidMove(index, num) {
+            let row = Math.floor(index / 9);
+            let col = index % 9;
+            let tempBoard = [...board];
+            tempBoard[index] = 0; // Temporarily empty for check
+            return isSafe(tempBoard, row, col, num);
+        }
+
+        function handleCellClick(index) {
+            if (!gameActive) return;
+            selectedCellIndex = index;
+            updateBoardVisuals();
+        }
+
+        function handleNumberInput(num) {
+            if (selectedCellIndex === -1 || !gameActive || fixedCells[selectedCellIndex]) return;
+
+            board[selectedCellIndex] = num; // 0 for erase
+            updateBoardVisuals();
+            checkWinCondition();
+        }
+
+        function checkWinCondition() {
+            // Check if board is full and matches solution
+            let isComplete = true;
+            let isCorrect = true;
+
+            for (let i = 0; i < 81; i++) {
+                if (board[i] === 0) {
+                    isComplete = false;
+                    break;
+                }
+                if (board[i] !== solution[i]) {
+                    isCorrect = false;
+                }
+            }
+
+            if (isComplete) {
+                if (isCorrect) {
+                    stopTimer();
+                    gameActive = false;
+                    selectedCellIndex = -1;
+                    updateBoardVisuals();
+                    finalTimeDisplay.innerText = formatTime(secondsElapsed);
+                    gameMessage.classList.remove("d-none");
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        newGameBtn.addEventListener("click", initGame);
+        difficultySelect.addEventListener("change", initGame);
+
+        // Numpad clicks (Mouse/Touch)
+        numpadButtons.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const val = parseInt(btn.dataset.val);
+                handleNumberInput(val);
+
+                // Keep selected state visually but remove focus to prevent spacebar issues
+                btn.blur();
+            });
+        });
+
+        // Keyboard support
+        document.addEventListener("keydown", (e) => {
+            if (!gameActive || selectedCellIndex === -1) return;
+
+            // Numbers 1-9
+            if (e.key >= '1' && e.key <= '9') {
+                handleNumberInput(parseInt(e.key));
+            }
+            // Delete/Backspace
+            else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                handleNumberInput(0);
+            }
+            // Arrow keys for navigation
+            else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                let row = Math.floor(selectedCellIndex / 9);
+                let col = selectedCellIndex % 9;
+
+                if (e.key === 'ArrowUp' && row > 0) row--;
+                else if (e.key === 'ArrowDown' && row < 8) row++;
+                else if (e.key === 'ArrowLeft' && col > 0) col--;
+                else if (e.key === 'ArrowRight' && col < 8) col++;
+
+                selectedCellIndex = row * 9 + col;
+                updateBoardVisuals();
+            }
+        });
+
+        // Start first game
+        initGame();
+    });
+</script>
