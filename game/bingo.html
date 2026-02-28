@@ -196,6 +196,85 @@ title: "賓果遊戲 (Bingo 1-25)"
             border-radius: 10px;
         }
     }
+
+    .win-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+        backdrop-filter: blur(5px);
+    }
+
+    .win-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .win-modal {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        transform: scale(0.5) translateY(50px);
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        max-width: 90%;
+        width: 400px;
+    }
+
+    .win-overlay.show .win-modal {
+        transform: scale(1) translateY(0);
+    }
+
+    .win-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .win-player-1 {
+        color: var(--bs-primary);
+        text-shadow: 0 0 15px rgba(13, 110, 253, 0.4);
+    }
+
+    .win-player-2 {
+        color: var(--bs-danger);
+        text-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .win-draw {
+        color: var(--bs-success);
+        text-shadow: 0 0 15px rgba(25, 135, 84, 0.4);
+    }
+
+    .win-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        display: inline-block;
+        animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-15px);
+        }
+    }
 </style>
 
 <div class="card shadow-sm mb-4">
@@ -231,6 +310,7 @@ title: "賓果遊戲 (Bingo 1-25)"
         </div>
 
         <div class="text-center mt-2 mt-md-4 mb-1 mb-md-0">
+
             <button id="reset-btn" class="btn btn-primary btn-sm px-3 py-1 px-md-4 py-md-2 fw-bold"
                 style="font-size: 0.95rem;">
                 <i class="bi bi-arrow-clockwise me-2"></i>重新抽牌並開始
@@ -239,6 +319,19 @@ title: "賓果遊戲 (Bingo 1-25)"
     </div>
 </div>
 
+<!-- 勝利特效 Overlay -->
+<div id="win-overlay" class="win-overlay">
+    <div class="win-modal">
+        <div id="win-icon" class="win-icon">🏆</div>
+        <h2 id="win-title" class="win-title">玩家 1 獲勝！</h2>
+        <p class="fs-5 text-secondary mb-4 fw-bold">恭喜達成 5 條連線！</p>
+        <button id="win-close-btn" class="btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow-sm">
+            <i class="bi bi-play-fill"></i> 再玩一局
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const board1Element = document.getElementById("board-1");
@@ -250,7 +343,47 @@ title: "賓果遊戲 (Bingo 1-25)"
         const lines2Element = document.getElementById("lines-2");
         const resetBtn = document.getElementById("reset-btn");
 
+        // 勝利動畫元素
+        const winOverlay = document.getElementById("win-overlay");
+        const winTitle = document.getElementById("win-title");
+        const winIcon = document.getElementById("win-icon");
+        const winCloseBtn = document.getElementById("win-close-btn");
+
+
         let gameActive = true;
+
+        // 彩紙特效輔助函式
+        function triggerConfetti(colors) {
+            if (typeof confetti === 'function') {
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: colors,
+                        zIndex: 10000
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: colors,
+                        zIndex: 10000
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        }
+
+
         let currentPlayer = 1; // 1 or 2
         const winningLinesTarget = 5;
 
@@ -445,15 +578,38 @@ title: "賓果遊戲 (Bingo 1-25)"
                 if (p1Result.count >= winningLinesTarget && p2Result.count >= winningLinesTarget) {
                     gameStatusBanner.innerHTML = "🎉 <span class='text-success'>平手！雙方同時達成 5 條連線！</span>";
                     gameStatusBanner.className = "text-success bg-success bg-opacity-10 shadow-sm";
+
+                    winTitle.innerText = "平手！";
+                    winTitle.className = "win-title win-draw";
+                    winIcon.innerText = "🤝";
+                    winCloseBtn.className = "btn btn-lg btn-success rounded-pill px-5 fw-bold shadow-sm";
                 } else if (p1Result.count >= winningLinesTarget) {
                     gameStatusBanner.innerHTML = "🏆 <span class='text-primary'>玩家 1 獲勝！</span>";
                     gameStatusBanner.className = "text-primary bg-primary bg-opacity-10 shadow-sm";
                     player1Section.classList.add("active-turn"); // Highlight winner
+
+                    winTitle.innerText = "玩家 1 獲勝！";
+                    winTitle.className = "win-title win-player-1";
+                    winIcon.innerText = "🏆";
+                    winCloseBtn.className = "btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow-sm";
+                    triggerConfetti(['#0d6efd', '#0dcaf0']);
                 } else {
                     gameStatusBanner.innerHTML = "🏆 <span class='text-danger'>玩家 2 獲勝！</span>";
                     gameStatusBanner.className = "text-danger bg-danger bg-opacity-10 shadow-sm";
                     player2Section.classList.add("active-turn"); // Highlight winner
+
+                    winTitle.innerText = "玩家 2 獲勝！";
+                    winTitle.className = "win-title win-player-2";
+                    winIcon.innerText = "🏆";
+                    winCloseBtn.className = "btn btn-lg btn-danger rounded-pill px-5 fw-bold shadow-sm";
+                    triggerConfetti(['#dc3545', '#ffc107']);
                 }
+
+                // Show overlay after a short delay
+                setTimeout(() => {
+                    winOverlay.classList.add("show");
+                }, 500);
+
                 return;
             }
 
@@ -485,6 +641,8 @@ title: "賓果遊戲 (Bingo 1-25)"
             player2Numbers = generateRandomBoard();
 
             // Reset UI
+            winOverlay.classList.remove("show"); // Hide overlay
+
             lines1Element.innerText = "0";
             lines2Element.innerText = "0";
 
@@ -498,6 +656,7 @@ title: "賓果遊戲 (Bingo 1-25)"
         }
 
         resetBtn.addEventListener("click", initGame);
+        winCloseBtn.addEventListener("click", initGame);
 
         // Start game initially
         initGame();
