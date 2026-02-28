@@ -151,6 +151,27 @@ title: "賓果遊戲 (Bingo 1-25)"
         }
     }
 
+    @keyframes pulse-btn {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+        }
+
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 15px rgba(25, 135, 84, 0);
+        }
+
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+        }
+    }
+
+    .flash-btn {
+        animation: pulse-btn 2s infinite;
+    }
+
     .status-badge {
         font-size: 0.85rem;
         padding: 3px 12px;
@@ -328,6 +349,10 @@ title: "賓果遊戲 (Bingo 1-25)"
                 style="font-size: 0.95rem;">
                 <i class="bi bi-arrow-clockwise me-2"></i>重新抽牌並開始
             </button>
+            <button id="play-again-btn" class="btn btn-lg btn-success rounded-pill px-5 fw-bold shadow-lg flash-btn"
+                style="display: none;">
+                <i class="bi bi-play-fill me-1"></i>再玩一局
+            </button>
         </div>
     </div>
 </div>
@@ -337,10 +362,7 @@ title: "賓果遊戲 (Bingo 1-25)"
     <div class="win-modal">
         <div id="win-icon" class="win-icon">🏆</div>
         <h2 id="win-title" class="win-title">玩家 1 獲勝！</h2>
-        <p class="fs-5 text-secondary mb-4 fw-bold">恭喜達成 5 條連線！</p>
-        <button id="win-close-btn" class="btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow-sm">
-            <i class="bi bi-play-fill"></i> 再玩一局
-        </button>
+        <p class="fs-5 text-secondary mb-0 fw-bold">恭喜達成 5 條連線！</p>
     </div>
 </div>
 
@@ -360,7 +382,7 @@ title: "賓果遊戲 (Bingo 1-25)"
         const winOverlay = document.getElementById("win-overlay");
         const winTitle = document.getElementById("win-title");
         const winIcon = document.getElementById("win-icon");
-        const winCloseBtn = document.getElementById("win-close-btn");
+        const playAgainBtn = document.getElementById("play-again-btn");
 
         const modePvp = document.getElementById("mode-pvp");
         const modePve = document.getElementById("mode-pve");
@@ -389,7 +411,7 @@ title: "賓果遊戲 (Bingo 1-25)"
         // 彩紙特效輔助函式
         function triggerConfetti(colors) {
             if (typeof confetti === 'function') {
-                const duration = 3000;
+                const duration = 5000;
                 const end = Date.now() + duration;
 
                 (function frame() {
@@ -690,7 +712,6 @@ title: "賓果遊戲 (Bingo 1-25)"
                     winTitle.innerText = "平手！";
                     winTitle.className = "win-title win-draw";
                     winIcon.innerText = "🤝";
-                    winCloseBtn.className = "btn btn-lg btn-success rounded-pill px-5 fw-bold shadow-sm";
                 } else if (p1Result.count >= winningLinesTarget) {
                     gameStatusBanner.innerHTML = "🏆 <span class='text-primary'>玩家 1 獲勝！</span>";
                     gameStatusBanner.className = "text-primary bg-primary bg-opacity-10 shadow-sm";
@@ -699,7 +720,6 @@ title: "賓果遊戲 (Bingo 1-25)"
                     winTitle.innerText = "玩家 1 獲勝！";
                     winTitle.className = "win-title win-player-1";
                     winIcon.innerText = "🏆";
-                    winCloseBtn.className = "btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow-sm";
                     triggerConfetti(['#0d6efd', '#0dcaf0']);
                 } else {
                     gameStatusBanner.innerHTML = `🏆 <span class='text-danger'>${getP2Name()} 獲勝！</span>`;
@@ -709,13 +729,19 @@ title: "賓果遊戲 (Bingo 1-25)"
                     winTitle.innerText = `${getP2Name()} 獲勝！`;
                     winTitle.className = "win-title win-player-2";
                     winIcon.innerText = "🏆";
-                    winCloseBtn.className = "btn btn-lg btn-danger rounded-pill px-5 fw-bold shadow-sm";
                     triggerConfetti(['#dc3545', '#ffc107']);
                 }
 
                 // Show overlay after a short delay
                 setTimeout(() => {
                     winOverlay.classList.add("show");
+
+                    // 5秒後自動關閉，並顯示再玩一局按鈕
+                    setTimeout(() => {
+                        winOverlay.classList.remove("show");
+                        resetBtn.style.display = "none";
+                        playAgainBtn.style.display = "inline-block";
+                    }, 5000);
                 }, 500);
 
                 return;
@@ -757,6 +783,8 @@ title: "賓果遊戲 (Bingo 1-25)"
 
             // Reset UI
             winOverlay.classList.remove("show"); // Hide overlay
+            resetBtn.style.display = "inline-block";
+            playAgainBtn.style.display = "none";
 
             lines1Element.innerText = "0";
             lines2Element.innerText = "0";
@@ -768,7 +796,7 @@ title: "賓果遊戲 (Bingo 1-25)"
         }
 
         resetBtn.addEventListener("click", initGame);
-        winCloseBtn.addEventListener("click", initGame);
+        playAgainBtn.addEventListener("click", initGame);
 
         // Start game initially
         initGame();
