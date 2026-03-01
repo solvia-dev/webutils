@@ -1,0 +1,270 @@
+---
+layout: default
+title: 銀行定存試算
+---
+
+<div class="mb-4">
+    <h4><i class="bi bi-bank"></i> 銀行定存試算</h4>
+    <p class="text-muted">輸入金額、利率與期間（年、月），計算到期利息與本息和。</p>
+</div>
+
+<div class="row">
+    <!-- 左側：輸入表單 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-cash-coin"></i> 試算條件輸入
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="principalAmount" class="form-label">本金金額 (元)</label>
+                    <input type="number" class="form-control" id="principalAmount" placeholder="例如: 100000" min="0">
+                </div>
+                <div class="mb-3">
+                    <label for="annualInterestRate" class="form-label">年利率 (%)</label>
+                    <input type="number" class="form-control" id="annualInterestRate" placeholder="例如: 1.5" step="0.01"
+                        min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">計息方式</label>
+                    <select class="form-select" id="calcMethod">
+                        <option value="compound" selected>整存整付 (月複利)</option>
+                        <option value="simple">存本取息 (單利)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">存款期間</label>
+                    <div class="d-flex gx-2">
+                        <select class="form-select me-2" id="periodYear">
+                            <option value="0">0 年</option>
+                            <option value="1" selected>1 年</option>
+                            <option value="2">2 年</option>
+                            <option value="3">3 年</option>
+                            <option value="4">4 年</option>
+                            <option value="5">5 年</option>
+                            <option value="6">6 年</option>
+                            <option value="7">7 年</option>
+                            <option value="8">8 年</option>
+                            <option value="9">9 年</option>
+                            <option value="10">10 年</option>
+                        </select>
+                        <select class="form-select" id="periodMonth">
+                            <option value="0" selected>0 個月</option>
+                            <option value="1">1 個月</option>
+                            <option value="2">2 個月</option>
+                            <option value="3">3 個月</option>
+                            <option value="4">4 個月</option>
+                            <option value="5">5 個月</option>
+                            <option value="6">6 個月</option>
+                            <option value="7">7 個月</option>
+                            <option value="8">8 個月</option>
+                            <option value="9">9 個月</option>
+                            <option value="10">10 個月</option>
+                            <option value="11">11 個月</option>
+                            <option value="12">12 個月</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary w-100" type="button" onclick="calculateDeposit()">計算結果 <i
+                        class="bi bi-calculator"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：計算結果 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-file-earmark-check"></i> 試算結果
+            </div>
+            <div
+                class="card-body d-flex flex-column justify-content-center align-items-center bg-light rounded text-center">
+                <h5 class="text-muted mb-2">到期利息</h5>
+                <h2 class="text-success fw-bold mb-4" id="resultInterest">0 <small
+                        class="fs-6 text-muted fw-normal">元</small></h2>
+
+                <h5 class="text-muted mb-2">本金＋到期利息</h5>
+                <h2 class="text-primary fw-bold" id="resultTotal">0 <small class="fs-6 text-muted fw-normal">元</small>
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-card-list"></i> 歷史計算清單</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearHistory()">清除紀錄</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>計息方式</th>
+                                <th>本金</th>
+                                <th>年利率</th>
+                                <th>期間</th>
+                                <th>到期利息</th>
+                                <th>本息試算加總</th>
+                                <th>計算時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="9" class="text-muted py-3">目前尚無計算紀錄</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let calculationHistory = [];
+
+    // 初始化從 localStorage 讀取紀錄
+    try {
+        const stored = localStorage.getItem('depositHistory');
+        if (stored) {
+            calculationHistory = JSON.parse(stored);
+            renderHistory();
+        }
+    } catch (e) {
+        console.error('讀取歷史紀錄失敗', e);
+    }
+
+    function calculateDeposit() {
+        const principalStr = document.getElementById('principalAmount').value;
+        const rateStr = document.getElementById('annualInterestRate').value;
+        const yearStr = document.getElementById('periodYear').value;
+        const monthStr = document.getElementById('periodMonth').value;
+        const calcMethod = document.getElementById('calcMethod').value;
+
+        const principal = parseFloat(principalStr);
+        const annualRate = parseFloat(rateStr);
+        const years = parseInt(yearStr, 10);
+        const months = parseInt(monthStr, 10);
+
+        if (isNaN(principal) || principal <= 0) {
+            alert("請輸入有效的本金金額！");
+            return;
+        }
+        if (isNaN(annualRate) || annualRate < 0) {
+            alert("請輸入有效的年利率！");
+            return;
+        }
+        if (years === 0 && months === 0) {
+            alert("存款期間不能為 0！");
+            return;
+        }
+
+        const totalMonths = (years * 12) + months;
+        let totalAmount = 0;
+        let interest = 0;
+
+        if (calcMethod === 'compound') {
+            // 整存整付 (月複利)
+            const monthlyRate = (annualRate / 100) / 12;
+            totalAmount = principal * Math.pow(1 + monthlyRate, totalMonths);
+            totalAmount = Math.round(totalAmount);
+            interest = totalAmount - principal;
+        } else {
+            // 存本取息 (單利)
+            interest = principal * (annualRate / 100) * (totalMonths / 12);
+            interest = Math.round(interest);
+            totalAmount = principal + interest;
+        }
+
+        // 更新 UI
+        document.getElementById('resultInterest').innerHTML = interest.toLocaleString() + ' <small class="fs-6 text-muted fw-normal">元</small>';
+        document.getElementById('resultTotal').innerHTML = totalAmount.toLocaleString() + ' <small class="fs-6 text-muted fw-normal">元</small>';
+
+        // 新增至歷史清單
+        const periodText = [];
+        if (years > 0) periodText.push(`${years} 年`);
+        if (months > 0) periodText.push(`${months} 個月`);
+
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+        const methodName = calcMethod === 'compound' ? '整存整付' : '存本取息';
+
+        const record = {
+            method: methodName,
+            principal: principal,
+            rate: annualRate,
+            period: periodText.join(' '),
+            interest: interest,
+            total: totalAmount,
+            time: timeStr
+        };
+
+        calculationHistory.unshift(record);
+        if (calculationHistory.length > 20) {
+            calculationHistory.pop();
+        }
+
+        localStorage.setItem('depositHistory', JSON.stringify(calculationHistory));
+
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '';
+
+        if (calculationHistory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-muted py-3">目前尚無計算紀錄</td></tr>';
+            return;
+        }
+
+        calculationHistory.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td><span class="badge bg-secondary">${item.method || '整存整付'}</span></td>
+                <td class="text-end pe-3">${item.principal.toLocaleString()}</td>
+                <td>${item.rate}%</td>
+                <td>${item.period}</td>
+                <td class="text-success text-end pe-3">+${item.interest.toLocaleString()}</td>
+                <td class="text-primary fw-bold text-end pe-3">${item.total.toLocaleString()}</td>
+                <td class="text-muted small align-middle">${item.time}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteHistoryItem(${index})" title="刪除此筆紀錄">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function clearHistory() {
+        if (confirm('確定要清除所有計算紀錄嗎？')) {
+            calculationHistory = [];
+            localStorage.removeItem('depositHistory');
+            renderHistory();
+            document.getElementById('resultInterest').innerHTML = '0 <small class="fs-6 text-muted fw-normal">元</small>';
+            document.getElementById('resultTotal').innerHTML = '0 <small class="fs-6 text-muted fw-normal">元</small>';
+            document.getElementById('principalAmount').value = '';
+            document.getElementById('annualInterestRate').value = '';
+            document.getElementById('periodYear').value = '1';
+            document.getElementById('periodMonth').value = '0';
+        }
+    }
+
+    function deleteHistoryItem(index) {
+        if (confirm('確定要刪除這筆計算紀錄嗎？')) {
+            calculationHistory.splice(index, 1);
+            localStorage.setItem('depositHistory', JSON.stringify(calculationHistory));
+            renderHistory();
+        }
+    }
+</script>
