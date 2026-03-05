@@ -1,0 +1,525 @@
+---
+layout: default
+title: 貸款試算
+---
+
+<div class="mb-4">
+    <h4><i class="bi bi-house-door"></i> 貸款每月還款試算</h4>
+    <p class="text-muted">輸入您貸款的本金、年限、寬限期及利率，計算每月還款金額與完整攤還明細。</p>
+</div>
+
+<div class="row">
+    <!-- 左側：輸入表單 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-cash-coin"></i> 試算條件輸入
+            </div>
+            <div class="card-body">
+                <!-- 貸款金額 -->
+                <div class="mb-3">
+                    <label for="loanAmount" class="form-label">貸款金額 (萬元)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="loanAmount" value="100" min="1" step="1">
+                        <span class="input-group-text">萬元</span>
+                    </div>
+                </div>
+                <!-- 年限 -->
+                <div class="mb-3">
+                    <label class="form-label">貸款年限</label>
+                    <div class="d-flex gap-2">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="loanYears" value="7" min="0" max="40" step="1" oninput="syncTotalMonths()">
+                            <span class="input-group-text">年</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="loanMonths" value="0" min="0" max="11" step="1" oninput="syncTotalMonths()">
+                            <span class="input-group-text">月</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 寬限期 -->
+                <div class="mb-3">
+                    <label class="form-label">寬限期 <small class="text-muted">(期間僅繳息)</small></label>
+                    <div class="d-flex gap-2">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="graceYears" value="0" min="0" max="10" step="1">
+                            <span class="input-group-text">年</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="graceMonths" value="0" min="0" max="11" step="1">
+                            <span class="input-group-text">月</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 相關費用 -->
+                <div class="mb-3">
+                    <label for="extraFee" class="form-label">相關費用 (元)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="extraFee" value="0" min="0" step="1">
+                        <span class="input-group-text">元</span>
+                    </div>
+                </div>
+                <!-- 還款方式 -->
+                <div class="mb-3">
+                    <label for="repayMethod" class="form-label">還款方式</label>
+                    <select class="form-select" id="repayMethod">
+                        <option value="equalPayment">本息平均攤還法</option>
+                        <option value="equalPrincipal" selected>本金平均攤還法</option>
+                    </select>
+                </div>
+                <!-- 按鈕 -->
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-secondary w-50" onclick="resetForm()">
+                        <i class="bi bi-arrow-counterclockwise"></i> 重設
+                    </button>
+                    <button class="btn btn-primary w-50" onclick="calculate()">
+                        計算結果 <i class="bi bi-calculator"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：年利率設定 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-percent"></i> 年利率設定
+            </div>
+            <div class="card-body">
+                <label class="form-label">利率段數</label>
+                <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="rateType" id="r1" value="1" checked onchange="renderRateRows()">
+                        <label class="form-check-label" for="r1">一段式</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="rateType" id="r2" value="2" onchange="renderRateRows()">
+                        <label class="form-check-label" for="r2">二段式</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="rateType" id="r3" value="3" onchange="renderRateRows()">
+                        <label class="form-check-label" for="r3">三段式</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="rateType" id="r4" value="4" onchange="renderRateRows()">
+                        <label class="form-check-label" for="r4">多段式</label>
+                    </div>
+                </div>
+                <!-- 利率段列 -->
+                <div id="rateRowsContainer"></div>
+                <!-- 多段式新增按鈕 -->
+                <div id="addSegBtn" style="display:none" class="mt-2">
+                    <button class="btn btn-sm btn-outline-success" onclick="addRateRow()">
+                        <i class="bi bi-plus-circle"></i> 新增段落
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 結果區 -->
+<div id="resultSection" style="display:none"></div>
+
+<script>
+// ─── 工具函式 ────────────────────────────────────────────────
+function fmtNum(n) {
+  return Math.round(n).toLocaleString('zh-TW');
+}
+function fmtFloat(n, d = 2) {
+  return parseFloat(n.toFixed(d)).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+// ─── 取得總期數 ──────────────────────────────────────────────
+function getTotalMonths() {
+  const y = parseInt(document.getElementById('loanYears').value) || 0;
+  const m = parseInt(document.getElementById('loanMonths').value) || 0;
+  return y * 12 + m;
+}
+function syncTotalMonths() {
+  renderRateRows();
+}
+
+// ─── 取得利率段落 ─────────────────────────────────────────────
+function getRateSegments() {
+  const container = document.getElementById('rateRowsContainer');
+  const rows = container.querySelectorAll('.rate-row');
+  const totalMonths = getTotalMonths();
+  const segs = [];
+  rows.forEach((row, i) => {
+    const endInput = row.querySelector('.seg-end');
+    const rateInput = row.querySelector('.seg-rate');
+    const end = i === rows.length - 1 ? totalMonths : (parseInt(endInput.value) || 0);
+    const rate = parseFloat(rateInput.value) || 0;
+    segs.push({ end, rate });
+  });
+  return segs;
+}
+
+// ─── 渲染利率欄位 ─────────────────────────────────────────────
+function renderRateRows() {
+  const selected = document.querySelector('input[name="rateType"]:checked');
+  const type = selected ? parseInt(selected.value) : 1;
+  const totalMonths = getTotalMonths();
+  const container = document.getElementById('rateRowsContainer');
+  const addBtn = document.getElementById('addSegBtn');
+
+  // 保留已輸入的利率值
+  const existing = [];
+  container.querySelectorAll('.rate-row').forEach(row => {
+    existing.push({
+      end: parseInt(row.querySelector('.seg-end')?.value) || 0,
+      rate: parseFloat(row.querySelector('.seg-rate')?.value) || 3
+    });
+  });
+
+  const count = type === 4 ? Math.max(existing.length || 1, 1) : type;
+  container.innerHTML = '';
+
+  for (let i = 0; i < count; i++) {
+    const prev = i === 0 ? 1 : (existing[i - 1]?.end || Math.round(totalMonths * i / count)) + 1;
+    const defaultEnd = i === count - 1 ? totalMonths : (existing[i]?.end || Math.round(totalMonths * (i + 1) / count));
+    const defaultRate = existing[i]?.rate ?? 2.55;
+    const isLast = i === count - 1;
+
+    const div = document.createElement('div');
+    div.className = 'rate-row d-flex align-items-center gap-2 mb-2';
+    div.innerHTML = `
+      <span class="input-group-text bg-light">${prev}&nbsp;~</span>
+      <input type="number" class="form-control seg-end text-center"
+        value="${isLast ? totalMonths : defaultEnd}"
+        min="${prev}" max="${totalMonths}" step="1"
+        style="max-width:80px"
+        ${isLast ? 'readonly' : ''}
+        oninput="updateRateRowLabels()">
+      <span class="input-group-text bg-light">月</span>
+      <span class="input-group-text bg-light ms-1">利率</span>
+      <div class="input-group" style="max-width:140px">
+        <input type="number" class="form-control seg-rate text-end"
+          value="${defaultRate}" min="0" max="30" step="0.01">
+        <span class="input-group-text">%</span>
+      </div>
+      ${type === 4 && count > 1 && isLast ? `<button class="btn btn-sm btn-outline-danger" onclick="removeLastRateRow()"><i class="bi bi-dash-circle"></i></button>` : ''}
+    `;
+    container.appendChild(div);
+  }
+
+  addBtn.style.display = type === 4 ? 'block' : 'none';
+}
+
+function updateRateRowLabels() {
+  const container = document.getElementById('rateRowsContainer');
+  const rows = container.querySelectorAll('.rate-row');
+  const totalMonths = getTotalMonths();
+  let prev = 1;
+  rows.forEach((row, i) => {
+    const fromLabel = row.querySelector('.input-group-text');
+    if (fromLabel) fromLabel.textContent = `${prev} ~`;
+    const endInput = row.querySelector('.seg-end');
+    const isLast = i === rows.length - 1;
+    if (isLast) {
+      endInput.value = totalMonths;
+    }
+    prev = (parseInt(endInput.value) || 0) + 1;
+  });
+}
+
+function addRateRow() {
+  const container = document.getElementById('rateRowsContainer');
+  const rows = container.querySelectorAll('.rate-row');
+  const lastRate = parseFloat(rows[rows.length - 1]?.querySelector('.seg-rate')?.value) || 2.55;
+
+  // 重新觸發渲染（多一行）
+  const existing = [];
+  rows.forEach(row => {
+    existing.push({
+      end: parseInt(row.querySelector('.seg-end')?.value) || 0,
+      rate: parseFloat(row.querySelector('.seg-rate')?.value) || 2.55
+    });
+  });
+  existing.push({ end: 0, rate: lastRate });
+
+  const totalMonths = getTotalMonths();
+  // 重新分配
+  const count = existing.length;
+  const reDistributed = existing.map((s, i) => ({
+    end: i === count - 1 ? totalMonths : (s.end || Math.round(totalMonths * (i + 1) / count)),
+    rate: s.rate
+  }));
+
+  // 直接寫回並重新渲染
+  const radio = document.querySelector('input[name="rateType"][value="4"]');
+  radio.checked = true;
+  // 補存到 existing 以便 renderRateRows 使用
+  document.getElementById('rateRowsContainer').innerHTML = '';
+  reDistributed.forEach((s, i) => {
+    const fakeRow = document.createElement('div');
+    fakeRow.className = 'rate-row';
+    fakeRow.innerHTML = `<input class="seg-end" value="${s.end}"><input class="seg-rate" value="${s.rate}">`;
+    document.getElementById('rateRowsContainer').appendChild(fakeRow);
+  });
+  renderRateRows();
+}
+
+function removeLastRateRow() {
+  const container = document.getElementById('rateRowsContainer');
+  const rows = container.querySelectorAll('.rate-row');
+  if (rows.length <= 1) return;
+  const existing = [];
+  rows.forEach(row => {
+    existing.push({
+      end: parseInt(row.querySelector('.seg-end')?.value) || 0,
+      rate: parseFloat(row.querySelector('.seg-rate')?.value) || 2.55
+    });
+  });
+  existing.pop();
+  const totalMonths = getTotalMonths();
+  existing[existing.length - 1].end = totalMonths;
+
+  container.innerHTML = '';
+  existing.forEach(s => {
+    const fakeRow = document.createElement('div');
+    fakeRow.className = 'rate-row';
+    fakeRow.innerHTML = `<input class="seg-end" value="${s.end}"><input class="seg-rate" value="${s.rate}">`;
+    container.appendChild(fakeRow);
+  });
+  renderRateRows();
+}
+
+// ─── 重設 ─────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('loanAmount').value = 1000;
+  document.getElementById('loanYears').value = 7;
+  document.getElementById('loanMonths').value = 0;
+  document.getElementById('graceYears').value = 0;
+  document.getElementById('graceMonths').value = 0;
+  document.getElementById('extraFee').value = 0;
+  document.getElementById('repayMethod').value = 'equalPrincipal';
+  document.querySelector('input[name="rateType"][value="1"]').checked = true;
+  renderRateRows();
+  document.getElementById('resultSection').style.display = 'none';
+}
+
+// ─── 主計算邏輯 ──────────────────────────────────────────────
+function calculate() {
+  const loanWan = parseFloat(document.getElementById('loanAmount').value) || 0;
+  const principal = loanWan * 10000;
+  const totalMonths = getTotalMonths();
+  const graceM = (parseInt(document.getElementById('graceYears').value) || 0) * 12
+                + (parseInt(document.getElementById('graceMonths').value) || 0);
+  const extraFee = parseFloat(document.getElementById('extraFee').value) || 0;
+  const method = document.getElementById('repayMethod').value;
+  const segs = getRateSegments();
+
+  if (principal <= 0 || totalMonths <= 0) {
+    alert('請輸入有效的貸款金額與年限');
+    return;
+  }
+  if (graceM >= totalMonths) {
+    alert('寬限期不可大於或等於貸款年限');
+    return;
+  }
+
+  // 建立每期月利率陣列
+  const monthlyRates = [];
+  let segIdx = 0;
+  for (let m = 1; m <= totalMonths; m++) {
+    while (segIdx < segs.length - 1 && m > segs[segIdx].end) segIdx++;
+    monthlyRates.push(segs[segIdx].rate / 100 / 12);
+  }
+
+  let schedule = [];
+
+  if (method === 'equalPayment') {
+    // ── 本息平均攤還法 ────────────────────────────
+    // 寬限期：只繳利息
+    let balance = principal;
+    for (let m = 1; m <= graceM; m++) {
+      const r = monthlyRates[m - 1];
+      const interest = balance * r;
+      schedule.push({ period: m, principal: 0, interest, payment: interest, balance });
+    }
+    // 還款期：重新計算 PMT
+    const repayMonths = totalMonths - graceM;
+    for (let m = graceM + 1; m <= totalMonths; m++) {
+      const r = monthlyRates[m - 1];
+      // 計算從此期到最後一期的 PMT（利率可能變動，若同段則 PMT 固定）
+      // 找到此期所在段落的結束期及相同利率的連續期間
+      // 簡化：每期動態計算剩餘期的 PMT（適用多段利率）
+      const remaining = totalMonths - m + 1;
+      let pmt;
+      if (r === 0) {
+        pmt = balance / remaining;
+      } else {
+        pmt = balance * r * Math.pow(1 + r, remaining) / (Math.pow(1 + r, remaining) - 1);
+      }
+      const interest = balance * r;
+      const princ = pmt - interest;
+      balance = Math.max(balance - princ, 0);
+      if (m === totalMonths) {
+        // 最後一期修正誤差
+        const lastPrinc = schedule.length > graceM ? balance + princ : princ;
+        schedule.push({ period: m, principal: princ, interest, payment: princ + interest, balance: 0 });
+        schedule[schedule.length - 1].balance = 0;
+      } else {
+        schedule.push({ period: m, principal: princ, interest, payment: pmt, balance });
+      }
+    }
+  } else {
+    // ── 本金平均攤還法 ────────────────────────────
+    const repayMonths = totalMonths - graceM;
+    const monthlyPrincipal = principal / repayMonths;
+    let balance = principal;
+
+    // 寬限期：只繳利息
+    for (let m = 1; m <= graceM; m++) {
+      const r = monthlyRates[m - 1];
+      const interest = balance * r;
+      schedule.push({ period: m, principal: 0, interest, payment: interest, balance });
+    }
+    // 還款期
+    for (let m = graceM + 1; m <= totalMonths; m++) {
+      const r = monthlyRates[m - 1];
+      const interest = balance * r;
+      let princ = monthlyPrincipal;
+      if (m === totalMonths) princ = balance; // 最後一期還清
+      balance = Math.max(balance - princ, 0);
+      schedule.push({ period: m, principal: princ, interest, payment: princ + interest, balance });
+    }
+  }
+
+  // ─ 統計 ─
+  const totalInterest = schedule.reduce((s, r) => s + r.interest, 0);
+  const totalPrincipal = schedule.reduce((s, r) => s + r.principal, 0);
+  const totalPayment = totalPrincipal + totalInterest + extraFee;
+  // 實際年費率（APR 近似）
+  const aprPct = (totalInterest + extraFee) / principal / (totalMonths / 12) * 100;
+
+  // ─ 渲染結果 ─
+  const methodName = method === 'equalPayment' ? '本息平均攤還法' : '本金平均攤還法';
+  const graceNote = graceM > 0 ? `（前 ${graceM} 期為寬限期，僅繳利息）` : '';
+
+  // 段落摘要
+  let segSummaryHtml = '';
+  let prevEnd = 0;
+  segs.forEach((seg, i) => {
+    const from = prevEnd + 1;
+    const to = seg.end;
+    if (from > totalMonths) return;
+    const toLabel = i === segs.length - 1 ? totalMonths : to;
+    if (i < segs.length - 1) {
+      segSummaryHtml += `<div class="small text-secondary mb-1"><strong>第${from}～${toLabel} 期</strong>&emsp;利率${seg.rate}%</div>`;
+    } else {
+      segSummaryHtml += `<div class="small text-secondary mb-1"><strong>最後一期</strong>&emsp;利率${seg.rate}%</div>`;
+    }
+    prevEnd = toLabel;
+  });
+
+  // 表格行（依段落分組）
+  let tableRows = '';
+  let curSegIdx = 0;
+  let lastRate = null;
+
+  schedule.forEach((row, idx) => {
+    const m = row.period;
+    // 找當期段落
+    while (curSegIdx < segs.length - 1 && m > segs[curSegIdx].end) curSegIdx++;
+    const curRate = segs[curSegIdx].rate;
+    if (curRate !== lastRate) {
+      tableRows += `<tr class="table-warning"><td colspan="5" class="text-start ps-3 fw-semibold">以下利率為 ${curRate}%</td></tr>`;
+      lastRate = curRate;
+    }
+
+    const isGrace = m <= graceM;
+    const balanceHtml = row.balance < 1
+      ? `<span class="fw-bold text-success">0</span>`
+      : fmtNum(row.balance);
+    const totalHtml = isGrace
+      ? `<span class="text-muted">${fmtNum(row.payment)}</span>`
+      : `<span class="fw-bold text-primary">${fmtNum(row.payment)}</span>`;
+
+    tableRows += `<tr>
+      <td><strong>${m}</strong></td>
+      <td>${isGrace ? '<span style="color:#999">0</span>' : fmtNum(row.principal)}</td>
+      <td>${fmtNum(row.interest)}</td>
+      <td>${totalHtml}</td>
+      <td>${balanceHtml}</td>
+    </tr>`;
+  });
+
+  const resultHtml = `
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-file-earmark-check"></i> ${methodName} <small class="fw-normal text-muted fs-6">（本試算結果僅供參考）</small></span>
+        </div>
+        <div class="card-body">
+          <!-- 摘要 -->
+          <div class="row text-center mb-3">
+            <div class="col-md-4 mb-2">
+              <div class="text-muted small">貸款金額</div>
+              <div class="fs-4 fw-bold text-primary">${fmtNum(principal)} <small class="fs-6 fw-normal text-muted">元</small></div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="text-muted small">總利息支出</div>
+              <div class="fs-4 fw-bold text-success">${fmtNum(totalInterest)} <small class="fs-6 fw-normal text-muted">元</small></div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="text-muted small">總費用年百分率</div>
+              <div class="fs-4 fw-bold text-warning">${fmtFloat(aprPct)} <small class="fs-6 fw-normal text-muted">%</small></div>
+            </div>
+          </div>
+          <hr>
+          ${segSummaryHtml}
+          ${graceNote ? `<div class="text-muted small mb-2">${graceNote}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light fw-bold">
+          <i class="bi bi-table"></i> 攤還明細表
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 text-center">
+              <thead class="table-dark">
+                <tr>
+                  <th>期數</th>
+                  <th>還本金額(元)</th>
+                  <th>繳息金額(元)</th>
+                  <th>本息合計(元)</th>
+                  <th>貸款餘額(元)</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+              <tfoot>
+                <tr class="table-secondary fw-bold">
+                  <td>合計</td>
+                  <td>${fmtNum(totalPrincipal)}</td>
+                  <td>${fmtNum(totalInterest)}</td>
+                  <td>${fmtNum(totalPrincipal + totalInterest)}</td>
+                  <td>0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  const sec = document.getElementById('resultSection');
+  sec.innerHTML = resultHtml;
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ─── 初始化 ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', renderRateRows);
+</script>
